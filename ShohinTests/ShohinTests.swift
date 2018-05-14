@@ -25,7 +25,7 @@ enum CounterMsg {
 }
 
 enum CounterKey: String {
-	case counter, increment, decrement, randomize
+	case counter, increment, decrement, randomize, counterField, multiplierField
 }
 
 let generator10 = RandomGenerator(min: 0, max: 10, toMessage: CounterMsg.setCounter)
@@ -50,11 +50,11 @@ func update(message: CounterMsg, u: inout Update<CounterModel, CounterMsg>) -> (
 
 func layout(model: CounterModel, superview: UIView, viewForKey: (String) -> UIView?) -> [NSLayoutConstraint] {
 	let margins = superview.layoutMarginsGuide
-	let counterView = viewForKey("counter")
-	let multiplierField = viewForKey("multiplierField")
-	let decrementButton = viewForKey("decrement")
-	let incrementButton = viewForKey("increment")
-	let randomizeButton = viewForKey("randomize")
+	let counterView = viewForKey(CounterKey.counter.rawValue)
+	let multiplierField = viewForKey(CounterKey.multiplierField.rawValue)
+	let decrementButton = viewForKey(CounterKey.decrement.rawValue)
+	let incrementButton = viewForKey(CounterKey.increment.rawValue)
+	let randomizeButton = viewForKey(CounterKey.randomize.rawValue)
 	return [
 		counterView?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
 		counterView?.topAnchor.constraint(equalTo: margins.topAnchor),
@@ -71,33 +71,33 @@ func layout(model: CounterModel, superview: UIView, viewForKey: (String) -> UIVi
 
 func view(model: CounterModel) -> [Element<CounterMsg>] {
 	return [
-		label("counter", [
+		label(CounterKey.counter, [
 			.tag(1),
 			.text("\(model.counter)"),
 			.textAlignment(.center),
 			]),
-		field("counterField", [
+		field(CounterKey.counterField, [
 			.tag(2),
 			.text("\(model.counter)"),
 			.onChange { CounterMsg.setCounter(to: $0.text.flatMap(Int.init) ?? 0) }
 			]),
-		button("increment", [
+		button(CounterKey.increment, [
 			.tag(3),
 			.title("Increment", for: .normal),
 			.onTouchUpInside { _ in CounterMsg.increment() },
 			]),
-		button("decrement", [
+		button(CounterKey.decrement, [
 			.tag(4),
 			.title("Decrement", for: .normal),
 			.onTouchUpInside({ _ in CounterMsg.decrement() }),
 			.set(\.tintColor, to: UIColor.red),
 			]),
-		button("randomize", [
+		button(CounterKey.randomize, [
 			.tag(5),
 			.title("Randomize", for: .normal),
 			.onTouchUpInside({ _ in CounterMsg.randomize() }),
 			]),
-		field("multiplierField", [
+		field(CounterKey.multiplierField, [
 			.tag(6),
 			.text(model.multiplier.map {"\($0)"} ?? ""),
 			.onChange { CounterMsg.setMultiplier(to: $0.text ?? "") }
