@@ -10,6 +10,8 @@
 		B2F43E2B20A9B0B7007A3744 /* Shohin.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B2F43E2120A9B0B7007A3744 /* Shohin.framework */; };
 		B2F43E3020A9B0B7007A3744 /* ShohinTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2F43E2F20A9B0B7007A3744 /* ShohinTests.swift */; };
 		B2F43E3220A9B0B7007A3744 /* Shohin.h in Headers */ = {isa = PBXBuildFile; fileRef = B2F43E2420A9B0B7007A3744 /* Shohin.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B2F43E3C20A9B0C9007A3744 /* Main.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2F43E3B20A9B0C9007A3744 /* Main.swift */; };
+		B2F43E3E20A9B104007A3744 /* Base.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2F43E3D20A9B104007A3744 /* Base.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -29,6 +31,8 @@
 		B2F43E2A20A9B0B7007A3744 /* ShohinTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShohinTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B2F43E2F20A9B0B7007A3744 /* ShohinTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShohinTests.swift; sourceTree = "<group>"; };
 		B2F43E3120A9B0B7007A3744 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B2F43E3B20A9B0C9007A3744 /* Main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Main.swift; sourceTree = "<group>"; };
+		B2F43E3D20A9B104007A3744 /* Base.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Base.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -73,6 +77,8 @@
 			children = (
 				B2F43E2420A9B0B7007A3744 /* Shohin.h */,
 				B2F43E2520A9B0B7007A3744 /* Info.plist */,
+				B2F43E3B20A9B0C9007A3744 /* Main.swift */,
+				B2F43E3D20A9B104007A3744 /* Base.swift */,
 			);
 			path = Shohin;
 			sourceTree = "<group>";
@@ -148,6 +154,7 @@
 				TargetAttributes = {
 					B2F43E2020A9B0B7007A3744 = {
 						CreatedOnToolsVersion = 9.3.1;
+						LastSwiftMigration = 0930;
 					};
 					B2F43E2920A9B0B7007A3744 = {
 						CreatedOnToolsVersion = 9.3.1;
@@ -194,6 +201,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B2F43E3E20A9B104007A3744 /* Base.swift in Sources */,
+				B2F43E3C20A9B0C9007A3744 /* Main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -339,6 +348,7 @@
 		B2F43E3620A9B0B7007A3744 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
@@ -356,6 +366,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = org.royalicing.Shohin;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -364,6 +375,7 @@
 		B2F43E3720A9B0B7007A3744 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
@@ -389,6 +401,7 @@
 		B2F43E3920A9B0B7007A3744 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 5278SPSAPR;
 				INFOPLIST_FILE = ShohinTests/Info.plist;
@@ -407,6 +420,7 @@
 		B2F43E3A20A9B0B7007A3744 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 5278SPSAPR;
 				INFOPLIST_FILE = ShohinTests/Info.plist;
