@@ -190,6 +190,10 @@ func button<Msg>(_ key: String, _ props: [ButtonProps<Msg>]) -> Element<Msg> {
 	return ButtonElement(key: key, props: props).toElement()
 }
 
+func button<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ButtonProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
+	return ButtonElement(key: key.rawValue, props: props).toElement()
+}
+
 
 enum LabelProps<Msg> {
 	case text(String)
@@ -242,6 +246,10 @@ struct LabelElement<Msg> {
 
 func label<Msg>(_ key: String, _ props: [LabelProps<Msg>]) -> Element<Msg> {
 	return LabelElement(key: key, props: props).toElement()
+}
+
+func label<Key: RawRepresentable, Msg>(_ key: Key, _ props: [LabelProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
+	return LabelElement(key: key.rawValue, props: props).toElement()
 }
 
 
@@ -300,6 +308,10 @@ struct FieldElement<Msg> {
 
 func field<Msg>(_ key: String, _ props: [FieldProps<Msg>]) -> Element<Msg> {
 	return FieldElement(key: key, props: props).toElement()
+}
+
+func field<Key: RawRepresentable, Msg>(_ key: Key, _ props: [FieldProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
+	return FieldElement(key: key.rawValue, props: props).toElement()
 }
 
 
