@@ -29,7 +29,7 @@ public class MessageMaker<Msg> {
 public struct Element<Msg> {
 	public let key: String
 	public let makeViewIfNeeded: (UIView?) -> UIView
-	public let applyToView: (UIView, (String, MessageMaker<Msg>) -> (Any?, Selector), (String?) -> UIView) -> ()
+	public let applyToView: (UIView, (String, MessageMaker<Msg>) -> (Any?, Selector)) -> ()
 }
 
 
@@ -150,7 +150,7 @@ public enum ButtonProps<Msg> {
 		return .keyPathApplier(KeyPathApplier(keyPath, value: value))
 	}
 	
-	fileprivate func apply(to button: UIButton, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector), viewWithKey: (String?) -> UIView) {
+	fileprivate func apply(to button: UIButton, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector)) {
 		switch self {
 		case let .onTouchUpInside(makeMessage):
 			let (target, action) = registerEventHandler("touchUpInside", MessageMaker(event: makeMessage))
@@ -179,11 +179,11 @@ struct ButtonElement<Msg> {
 		return existing as? UIButton ?? defaultButton
 	}
 	
-	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector), viewWithKey: (String?) -> UIView) {
+	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector)) {
 		guard let button = view as? UIButton else { return }
 		
 		button.removeTarget(nil, action: nil, for: .allEvents)
-		props.forEach { $0.apply(to: button, registerEventHandler: registerEventHandler, viewWithKey: viewWithKey) }
+		props.forEach { $0.apply(to: button, registerEventHandler: registerEventHandler) }
 	}
 	
 	func toElement() -> Element<Msg> {
@@ -205,7 +205,7 @@ public enum LabelProps<Msg> {
 	case textAlignment(NSTextAlignment)
 	case tag(Int)
 	
-	fileprivate func apply(to label: UILabel, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector), viewWithKey: (String?) -> UIView) {
+	fileprivate func apply(to label: UILabel, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector)) {
 		switch self {
 		case let .text(text):
 			label.text = text
@@ -231,10 +231,10 @@ struct LabelElement<Msg> {
 		return existing as? UILabel ?? defaultLabel
 	}
 	
-	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector), viewWithKey: (String?) -> UIView) {
+	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector)) {
 		guard let label = view as? UILabel else { return }
 		
-		props.forEach { $0.apply(to: label, registerEventHandler: registerEventHandler, viewWithKey: viewWithKey) }
+		props.forEach { $0.apply(to: label, registerEventHandler: registerEventHandler) }
 	}
 	
 	func toElement() -> Element<Msg> {
@@ -269,7 +269,7 @@ enum FieldProps<Msg> {
 		case let .tag(tag):
 			field.tag = tag
 		case let .onChange(makeMessage):
-			let (target, action) = registerEventHandler("@editingChanged", MessageMaker(textField: makeMessage))
+			let (target, action) = registerEventHandler("editingChanged", MessageMaker(textField: makeMessage))
 			field.addTarget(target, action: action, for: UIControlEvents.editingChanged)
 		}
 	}
@@ -289,7 +289,7 @@ struct FieldElement<Msg> {
 		return existing as? UITextField ?? makeDefault()
 	}
 	
-	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector), viewWithKey: (String?) -> UIView) {
+	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector)) {
 		guard let field = view as? UITextField else { return }
 		
 		field.removeTarget(nil, action: nil, for: .allEvents)
@@ -345,8 +345,7 @@ class ViewReconciler<Msg> {
 			
 			element.applyToView(
 				updatedView,
-				handlers.curriedRegister(elementKey: key),
-				{ key in view }
+				handlers.curriedRegister(elementKey: key)
 			)
 		}
 	}
