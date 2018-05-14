@@ -90,6 +90,7 @@ func view(model: CounterModel) -> [Element<CounterMsg>] {
 			.tag(4),
 			.title("Decrement", for: .normal),
 			.onTouchUpInside({ _ in CounterMsg.decrement() }),
+			.set(\.tintColor, to: UIColor.red),
 			]),
 		button("randomize", [
 			.tag(5),
@@ -120,6 +121,10 @@ class ShohinTests: XCTestCase {
 	
 	var incrementButton: UIButton {
 		return self.mainView.viewWithTag(3) as! UIButton
+	}
+	
+	var decrementButton: UIButton {
+		return self.mainView.viewWithTag(4) as! UIButton
 	}
 	
 	override func setUp() {
@@ -160,6 +165,10 @@ class ShohinTests: XCTestCase {
 		e.append(keyValueObservingExpectation(for: counterField, keyPath: "text", expectedValue: "2"))
 		
 		let _ = XCTWaiter().wait(for: e, timeout: 0.1)
+	}
+	
+	func testKeyPath() {
+		XCTAssertEqual(decrementButton.tintColor, UIColor.red)
 	}
 	
 	func testPerformanceExample() {

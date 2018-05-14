@@ -134,12 +134,31 @@ struct Element<Msg> {
 }
 
 
+class KeyPathApplier<Root> {
+	private var applier: (Root) -> ()
+	
+	init<Value>(_ keyPath: ReferenceWritableKeyPath<Root, Value>, value: Value) {
+		self.applier = { root in
+			root[keyPath: keyPath] = value
+		}
+	}
+	
+	func apply(to root: Root) {
+		applier(root)
+	}
+}
+
 
 enum ButtonProps<Msg> {
 	case onTouchUpInside((UIEvent) -> Msg)
 	case title(String?, for: UIControlState)
 	case layout(LayoutGuideProp)
 	case tag(Int)
+	case keyPathApplier(KeyPathApplier<UIButton>)
+	
+	static func set<Value>(_ keyPath: ReferenceWritableKeyPath<UIButton, Value>, to value: Value) -> ButtonProps {
+		return .keyPathApplier(KeyPathApplier(keyPath, value: value))
+	}
 	
 	fileprivate func apply(to button: UIButton, eventHandlers: EventHandlerSet<Msg>, viewWithKey: (String?) -> UIView) {
 		switch self {
@@ -152,6 +171,8 @@ enum ButtonProps<Msg> {
 			layoutGuideProp.getConstraint(button, viewWithKey(nil)).isActive = true
 		case let .tag(tag):
 			button.tag = tag
+		case let .keyPathApplier(applier):
+			applier.apply(to: button)
 		}
 	}
 }
