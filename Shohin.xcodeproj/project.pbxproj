@@ -77,8 +77,8 @@
 			children = (
 				B2F43E2420A9B0B7007A3744 /* Shohin.h */,
 				B2F43E2520A9B0B7007A3744 /* Info.plist */,
-				B2F43E3B20A9B0C9007A3744 /* Main.swift */,
 				B2F43E3D20A9B104007A3744 /* Base.swift */,
+				B2F43E3B20A9B0C9007A3744 /* Main.swift */,
 			);
 			path = Shohin;
 			sourceTree = "<group>";

@@ -9,34 +9,45 @@
 import UIKit
 
 
-class EventHandler<Msg> : NSObject {
-	private let send: (Msg) -> ()
-	
-	enum MessageMaker {
+public class MessageMaker<Msg> {
+	fileprivate enum Store {
 		case event((UIEvent) -> Msg)
 		case textField((UITextField) -> Msg)
 	}
 	
-	let messageMaker: MessageMaker
+	fileprivate let store: Store
 	
-	init(
-		send: @escaping (Msg) -> (),
-		makeMessage: @escaping (UIEvent) -> Msg
-		) {
-		self.send = send
-		self.messageMaker = .event(makeMessage)
+	init(event makeMessage: @escaping (UIEvent) -> Msg) {
+		self.store = .event(makeMessage)
 	}
 	
+	init(textField makeMessage: @escaping (UITextField) -> Msg) {
+		self.store = .textField(makeMessage)
+	}
+}
+
+public struct Element<Msg> {
+	public let key: String
+	public let makeViewIfNeeded: (UIView?) -> UIView
+	public let applyToView: (UIView, (String, MessageMaker<Msg>) -> (Any?, Selector), (String?) -> UIView) -> ()
+}
+
+
+class EventHandler<Msg> : NSObject {
+	private let send: (Msg) -> ()
+	
+	let messageMaker: MessageMaker<Msg>
+	
 	init(
 		send: @escaping (Msg) -> (),
-		makeMessage: @escaping (UITextField) -> Msg
+		messageMaker: MessageMaker<Msg>
 		) {
 		self.send = send
-		self.messageMaker = .textField(makeMessage)
+		self.messageMaker = messageMaker
 	}
 	
 	@objc func performForEvent(_ event: UIEvent) {
-		switch messageMaker {
+		switch messageMaker.store {
 		case let .event(makeMessage):
 			send(makeMessage(event))
 		default:
@@ -45,7 +56,7 @@ class EventHandler<Msg> : NSObject {
 	}
 	
 	@objc func performForTextField(_ textField: UITextField) {
-		switch messageMaker {
+		switch messageMaker.store {
 		case let .textField(makeMessage):
 			send(makeMessage(textField))
 		default:
@@ -53,88 +64,68 @@ class EventHandler<Msg> : NSObject {
 		}
 	}
 	
-	var actionForEvent: Selector {
+	private var actionForEvent: Selector {
 		return NSSelectorFromString("performForEvent:")
 		//return #selector(EventHandler.performForEvent(_:))
 	}
 	
-	var actionForTextField: Selector {
+	private var actionForTextField: Selector {
 		return NSSelectorFromString("performForTextField:")
+	}
+	
+	var action: Selector {
+		switch messageMaker.store {
+		case .event:
+			return actionForEvent
+		case .textField:
+			return actionForTextField
+		}
 	}
 }
 
 class EventHandlerSet<Msg> {
-	var handlers: Dictionary<String, EventHandler<Msg>> = [:]
+	var groupedHandlers: Dictionary<String, Dictionary<String, EventHandler<Msg>>> = [:]
 	var send: (Msg) -> () = { _ in }
 	
-	func register(key: String, makeMessage: @escaping (UIEvent) -> Msg) -> EventHandler<Msg> {
+	private func registerForElement(elementHandlers: inout Dictionary<String, EventHandler<Msg>>?, actionKey: String, messageMaker: MessageMaker<Msg>) -> EventHandler<Msg> {
+		if elementHandlers == nil {
+			elementHandlers = [:]
+		}
+		
+		if
+			let existing = elementHandlers?[actionKey],
+			existing.messageMaker === messageMaker
+		{
+			return existing
+		}
+		
 		let eventHandler = EventHandler(send: { [weak self] (msg) in
 			self?.send(msg)
-			}, makeMessage: makeMessage)
-		handlers[key] = eventHandler
+			}, messageMaker: messageMaker)
+		
+		elementHandlers?[actionKey] = eventHandler
 		return eventHandler
 	}
 	
-	func register(key: String, makeMessage: @escaping (UITextField) -> Msg) -> EventHandler<Msg> {
-		let eventHandler = EventHandler(send: { [weak self] (msg) in
-			self?.send(msg)
-			}, makeMessage: makeMessage)
-		handlers[key] = eventHandler
-		return eventHandler
+	func register(elementKey: String, actionKey: String, messageMaker: MessageMaker<Msg>) -> (Any?, Selector) {
+		let eventHandler = registerForElement(elementHandlers: &groupedHandlers[elementKey], actionKey: actionKey, messageMaker: messageMaker)
+		
+		return (eventHandler, eventHandler.action)
+	}
+	
+	func curriedRegister(elementKey: String) -> (String, MessageMaker<Msg>) -> (Any?, Selector) {
+		return { (actionKey, messageMaker) in
+			self.register(elementKey: elementKey, actionKey: actionKey, messageMaker: messageMaker)
+		}
 	}
 	
 	func reset() {
-		handlers.removeAll()
-	}
-	
-	subscript(key: String) -> EventHandler<Msg>? {
-		return handlers[key]
+		groupedHandlers.removeAll()
 	}
 }
 
 
-struct LayoutGuideProp {
-	let getConstraint: (UIView, UIView) -> NSLayoutConstraint
-	
-	init(getConstraintBetween: @escaping (UIView, UIView) -> NSLayoutConstraint) {
-		self.getConstraint = getConstraintBetween
-	}
-	
-	static func superview(_ viewAnchorKeyPath: KeyPath<UIView, NSLayoutXAxisAnchor>, equalTo guideAnchorKeyPath: KeyPath<UIView, NSLayoutXAxisAnchor>) -> LayoutGuideProp {
-		return self.init { view, guideView in
-			let viewAnchor = view[keyPath: viewAnchorKeyPath]
-			let guideAnchor = guideView[keyPath: guideAnchorKeyPath]
-			return viewAnchor.constraint(equalTo: guideAnchor)
-		}
-	}
-	
-	static func superview(_ viewAnchorKeyPath: KeyPath<UIView, NSLayoutYAxisAnchor>, equalTo guideAnchorKeyPath: KeyPath<UIView, NSLayoutYAxisAnchor>) -> LayoutGuideProp {
-		return self.init { view, guideView in
-			let viewAnchor = view[keyPath: viewAnchorKeyPath]
-			let guideAnchor = guideView[keyPath: guideAnchorKeyPath]
-			return viewAnchor.constraint(equalTo: guideAnchor)
-		}
-	}
-	
-	static func margins(_ viewAnchorKeyPath: KeyPath<UIView, NSLayoutXAxisAnchor>, equalTo guideAnchorKeyPath: KeyPath<UILayoutGuide, NSLayoutXAxisAnchor>) -> LayoutGuideProp {
-		return self.superview(viewAnchorKeyPath, equalTo: (\UIView.layoutMarginsGuide).appending(path: guideAnchorKeyPath))
-	}
-	
-	static func margins(_ viewAnchorKeyPath: KeyPath<UIView, NSLayoutYAxisAnchor>, equalTo guideAnchorKeyPath: KeyPath<UILayoutGuide, NSLayoutYAxisAnchor>) -> LayoutGuideProp {
-		return self.superview(viewAnchorKeyPath, equalTo: (\UIView.layoutMarginsGuide).appending(path: guideAnchorKeyPath))
-	}
-}
-
-
-
-struct Element<Msg> {
-	let key: String
-	let makeViewIfNeeded: (UIView?) -> UIView
-	let update: (UIView, EventHandlerSet<Msg>, (String?) -> UIView) -> ()
-}
-
-
-class KeyPathApplier<Root> {
+public class KeyPathApplier<Root> {
 	private var applier: (Root) -> ()
 	
 	init<Value>(_ keyPath: ReferenceWritableKeyPath<Root, Value>, value: Value) {
@@ -149,10 +140,9 @@ class KeyPathApplier<Root> {
 }
 
 
-enum ButtonProps<Msg> {
+public enum ButtonProps<Msg> {
 	case onTouchUpInside((UIEvent) -> Msg)
 	case title(String?, for: UIControlState)
-	case layout(LayoutGuideProp)
 	case tag(Int)
 	case keyPathApplier(KeyPathApplier<UIButton>)
 	
@@ -160,15 +150,13 @@ enum ButtonProps<Msg> {
 		return .keyPathApplier(KeyPathApplier(keyPath, value: value))
 	}
 	
-	fileprivate func apply(to button: UIButton, eventHandlers: EventHandlerSet<Msg>, viewWithKey: (String?) -> UIView) {
+	fileprivate func apply(to button: UIButton, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector), viewWithKey: (String?) -> UIView) {
 		switch self {
 		case let .onTouchUpInside(makeMessage):
-			let handler = eventHandlers.register(key: "@touchUpInside", makeMessage: makeMessage)
-			button.addTarget(handler, action: handler.actionForEvent, for: UIControlEvents.touchUpInside)
+			let (target, action) = registerEventHandler("touchUpInside", MessageMaker(event: makeMessage))
+			button.addTarget(target, action: action, for: UIControlEvents.touchUpInside)
 		case let .title(title, for: state):
 			button.setTitle(title, for: state)
-		case let .layout(layoutGuideProp):
-			layoutGuideProp.getConstraint(button, viewWithKey(nil)).isActive = true
 		case let .tag(tag):
 			button.tag = tag
 		case let .keyPathApplier(applier):
@@ -191,19 +179,15 @@ struct ButtonElement<Msg> {
 		return existing as? UIButton ?? defaultButton
 	}
 	
-	func update(_ button: UIButton, eventHandlers: EventHandlerSet<Msg>, viewWithKey: (String?) -> UIView) {
-		eventHandlers.reset()
-		button.removeTarget(nil, action: nil, for: .allEvents)
-		props.forEach { $0.apply(to: button, eventHandlers: eventHandlers, viewWithKey: viewWithKey) }
-	}
-	
-	func updateView(_ view: UIView, eventHandlers: EventHandlerSet<Msg>, viewWithKey: (String?) -> UIView) {
+	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector), viewWithKey: (String?) -> UIView) {
 		guard let button = view as? UIButton else { return }
-		update(button, eventHandlers: eventHandlers, viewWithKey: viewWithKey)
+		
+		button.removeTarget(nil, action: nil, for: .allEvents)
+		props.forEach { $0.apply(to: button, registerEventHandler: registerEventHandler, viewWithKey: viewWithKey) }
 	}
 	
 	func toElement() -> Element<Msg> {
-		return Element(key: key, makeViewIfNeeded: prepare, update: updateView)
+		return Element(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
 	}
 }
 
@@ -216,20 +200,17 @@ func button<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ButtonProps<Msg>])
 }
 
 
-enum LabelProps<Msg> {
+public enum LabelProps<Msg> {
 	case text(String)
 	case textAlignment(NSTextAlignment)
-	case layout(LayoutGuideProp)
 	case tag(Int)
 	
-	fileprivate func apply(to label: UILabel, eventHandlers: EventHandlerSet<Msg>, viewWithKey: (String?) -> UIView) {
+	fileprivate func apply(to label: UILabel, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector), viewWithKey: (String?) -> UIView) {
 		switch self {
 		case let .text(text):
 			label.text = text
 		case let .textAlignment(alignment):
 			label.textAlignment = alignment
-		case let .layout(layoutGuideProp):
-			layoutGuideProp.getConstraint(label, viewWithKey(nil)).isActive = true
 		case let .tag(tag):
 			label.tag = tag
 		}
@@ -250,18 +231,14 @@ struct LabelElement<Msg> {
 		return existing as? UILabel ?? defaultLabel
 	}
 	
-	func update(_ label: UILabel, eventHandlers: EventHandlerSet<Msg>, viewWithKey: (String?) -> UIView) {
-		eventHandlers.reset()
-		props.forEach { $0.apply(to: label, eventHandlers: eventHandlers, viewWithKey: viewWithKey) }
-	}
-	
-	func updateView(_ view: UIView, eventHandlers: EventHandlerSet<Msg>, viewWithKey: (String?) -> UIView) {
+	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector), viewWithKey: (String?) -> UIView) {
 		guard let label = view as? UILabel else { return }
-		update(label, eventHandlers: eventHandlers, viewWithKey: viewWithKey)
+		
+		props.forEach { $0.apply(to: label, registerEventHandler: registerEventHandler, viewWithKey: viewWithKey) }
 	}
 	
 	func toElement() -> Element<Msg> {
-		return Element(key: key, makeViewIfNeeded: prepare, update: updateView)
+		return Element(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
 	}
 }
 
@@ -281,7 +258,7 @@ enum FieldProps<Msg> {
 	case tag(Int)
 	case onChange((UITextField) -> Msg)
 	
-	fileprivate func apply(to field: UITextField, eventHandlers: EventHandlerSet<Msg>) {
+	fileprivate func apply(to field: UITextField, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector)) {
 		switch self {
 		case let .text(text):
 			field.text = text
@@ -292,8 +269,8 @@ enum FieldProps<Msg> {
 		case let .tag(tag):
 			field.tag = tag
 		case let .onChange(makeMessage):
-			let handler = eventHandlers.register(key: "@editingChanged", makeMessage: makeMessage)
-			field.addTarget(handler, action: handler.actionForTextField, for: UIControlEvents.editingChanged)
+			let (target, action) = registerEventHandler("@editingChanged", MessageMaker(textField: makeMessage))
+			field.addTarget(target, action: action, for: UIControlEvents.editingChanged)
 		}
 	}
 }
@@ -312,18 +289,15 @@ struct FieldElement<Msg> {
 		return existing as? UITextField ?? makeDefault()
 	}
 	
-	func update(_ label: UITextField, eventHandlers: EventHandlerSet<Msg>, viewWithKey: (String?) -> UIView) {
-		eventHandlers.reset()
-		props.forEach { $0.apply(to: label, eventHandlers: eventHandlers) }
-	}
-	
-	func updateView(_ view: UIView, eventHandlers: EventHandlerSet<Msg>, viewWithKey: (String?) -> UIView) {
-		guard let label = view as? UITextField else { return }
-		update(label, eventHandlers: eventHandlers, viewWithKey: viewWithKey)
+	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector), viewWithKey: (String?) -> UIView) {
+		guard let field = view as? UITextField else { return }
+		
+		field.removeTarget(nil, action: nil, for: .allEvents)
+		props.forEach { $0.apply(to: field, registerEventHandler: registerEventHandler) }
 	}
 	
 	func toElement() -> Element<Msg> {
-		return Element(key: key, makeViewIfNeeded: prepare, update: updateView)
+		return Element(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
 	}
 }
 
@@ -368,7 +342,12 @@ class ViewReconciler<Msg> {
 				existingView?.removeFromSuperview()
 				view.addSubview(updatedView)
 			}
-			element.update(updatedView, handlers, { key in view })
+			
+			element.applyToView(
+				updatedView,
+				handlers.curriedRegister(elementKey: key),
+				{ key in view }
+			)
 		}
 	}
 	
@@ -408,11 +387,11 @@ struct Update<Model, Msg> {
 	}
 	
 	var command: Command<Msg> {
-		return Command.batch(commands)
+		return Command(batch: commands)
 	}
 }
 
-class Program<Model, Msg> {
+public class Program<Model, Msg> {
 	let reconciler: ViewReconciler<Msg>
 	let store: Store<Model, Msg>!
 	

@@ -9,47 +9,61 @@
 import Foundation
 
 
-indirect enum Command<Msg> {
-	case none
-	case batch([Command<Msg>])
-	case routine(() -> Msg)
-	
-	func run(send: (Msg) -> ()) {
-		switch self {
-		case let .batch(commands):
-			commands.forEach { $0.run(send: send) }
-		case let .routine(routine):
-			send(routine())
-		case .none:
-			break
+public struct Command<Msg> {
+	fileprivate indirect enum Store<Msg> {
+		case routine(() -> Msg)
+		case batch([Store<Msg>])
+		
+		fileprivate func run(send: (Msg) -> ()) {
+			switch self {
+			case let .routine(routine):
+				send(routine())
+			case let .batch(commands):
+				commands.forEach { $0.run(send: send) }
+			}
 		}
 	}
-}
-extension Command : ExpressibleByArrayLiteral {
-	init(arrayLiteral elements: Command...) {
-		self = .batch(elements)
+	
+	private let store: Store<Msg>
+	
+	fileprivate init(store: Store<Msg>) {
+		self.store = store
+	}
+	
+	init<S>(batch elements: S) where S : Sequence, Command == S.Element {
+		self.store = .batch(elements.map{ $0.store })
+	}
+	
+	public func run(send: (Msg) -> ()) {
+		self.store.run(send: send)
 	}
 }
 
-class RandomGenerator<Msg> {
+extension Command : ExpressibleByArrayLiteral {
+	public init(arrayLiteral elements: Command...) {
+		self.store = .batch(elements.map{ $0.store })
+	}
+}
+
+public class RandomGenerator<Msg> {
 	let min: Int
 	let max: Int
 	let toMessage : (Int) -> Msg
 	
-	init(min: Int, max: Int, toMessage: @escaping (Int) -> Msg) {
+	public init(min: Int, max: Int, toMessage: @escaping (Int) -> Msg) {
 		self.min = min
 		self.max = max
 		self.toMessage = toMessage
 	}
 	
-	var command: Command<Msg> {
+	public var command: Command<Msg> {
 		let min = self.min
 		let max = self.max
 		let toMessage = self.toMessage
-		return Command.routine {
+		return Command(store: Command.Store.routine({
 			let value = min + Int(arc4random_uniform(UInt32(max - min + 1)))
 			return toMessage(value)
-		}
+		}))
 	}
 }
 
