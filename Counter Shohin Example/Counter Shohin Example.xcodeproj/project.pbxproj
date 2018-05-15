@@ -15,6 +15,7 @@
 		B286A5F020AAD8B600A728E5 /* Counter_Shohin_ExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B286A5EF20AAD8B600A728E5 /* Counter_Shohin_ExampleTests.swift */; };
 		B286A5FB20AAD8B600A728E5 /* Counter_Shohin_ExampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B286A5FA20AAD8B600A728E5 /* Counter_Shohin_ExampleUITests.swift */; };
 		B2B5C7E020AAD98900942421 /* Base.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2B5C7DF20AAD98900942421 /* Base.swift */; };
+		B2B5C7E220AAEDDB00942421 /* CustomElements.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2B5C7E120AAEDDB00942421 /* CustomElements.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +50,7 @@
 		B286A5FA20AAD8B600A728E5 /* Counter_Shohin_ExampleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Counter_Shohin_ExampleUITests.swift; sourceTree = "<group>"; };
 		B286A5FC20AAD8B600A728E5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B2B5C7DF20AAD98900942421 /* Base.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Base.swift; sourceTree = "<group>"; };
+		B2B5C7E120AAEDDB00942421 /* CustomElements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomElements.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,6 +102,7 @@
 			isa = PBXGroup;
 			children = (
 				B286A5DA20AAD8B500A728E5 /* AppDelegate.swift */,
+				B2B5C7E120AAEDDB00942421 /* CustomElements.swift */,
 				B2B5C7DF20AAD98900942421 /* Base.swift */,
 				B286A5DC20AAD8B500A728E5 /* ViewController.swift */,
 				B286A5DE20AAD8B500A728E5 /* Main.storyboard */,
@@ -262,6 +265,7 @@
 				B2B5C7E020AAD98900942421 /* Base.swift in Sources */,
 				B286A5DD20AAD8B500A728E5 /* ViewController.swift in Sources */,
 				B286A5DB20AAD8B500A728E5 /* AppDelegate.swift in Sources */,
+				B2B5C7E220AAEDDB00942421 /* CustomElements.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

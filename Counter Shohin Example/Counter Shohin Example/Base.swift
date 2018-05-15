@@ -40,28 +40,7 @@ func updateCounter(message: CounterMsg, change: inout Change<CounterModel, Count
 }
 
 enum CounterKey: String {
-	case counter, increment, decrement, randomize, counterField
-}
-
-func layoutCounter(model: CounterModel, superview: UIView, viewForKey: (String) -> UIView?) -> [NSLayoutConstraint] {
-	let margins = superview.layoutMarginsGuide
-	let counterView = viewForKey(CounterKey.counter.rawValue)
-	let counterField = viewForKey(CounterKey.counterField.rawValue)
-	let decrementButton = viewForKey(CounterKey.decrement.rawValue)
-	let incrementButton = viewForKey(CounterKey.increment.rawValue)
-	let randomizeButton = viewForKey(CounterKey.randomize.rawValue)
-	return [
-		counterView?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		counterView?.topAnchor.constraint(equalTo: margins.topAnchor),
-		counterField?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		counterView.flatMap { counterField?.topAnchor.constraint(equalTo: $0.bottomAnchor) },
-		decrementButton?.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
-		decrementButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
-		incrementButton?.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
-		incrementButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
-		randomizeButton?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		randomizeButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
-		].compactMap{ $0 }
+	case counter, increment, decrement, randomize, counterField, counterSlider
 }
 
 func viewCounter(model: CounterModel) -> [Element<CounterMsg>] {
@@ -77,6 +56,16 @@ func viewCounter(model: CounterModel) -> [Element<CounterMsg>] {
 			.returnKeyType(.done),
 			.on(.editingDidEndOnExit) { textField in
 				let value = textField.text.flatMap(Int.init) ?? 0
+				return CounterMsg.setCounter(to: value)
+			}
+			]),
+		slider(CounterKey.counterSlider, [
+			.set(\.value, to: Float(model.counter)),
+			.set(\.minimumValue, to: 0),
+			.set(\.maximumValue, to: 10),
+			.set(\.isContinuous, to: true),
+			.on(.valueChanged) { slider, event in
+				let value = Int(slider.value)
 				return CounterMsg.setCounter(to: value)
 			}
 			]),
@@ -97,4 +86,30 @@ func viewCounter(model: CounterModel) -> [Element<CounterMsg>] {
 			.onTouchUpInside({ _ in CounterMsg.randomize() }),
 			]),
 	]
+}
+
+func layoutCounter(model: CounterModel, superview: UIView, viewForKey: (String) -> UIView?) -> [NSLayoutConstraint] {
+	let margins = superview.layoutMarginsGuide
+	let counterView = viewForKey(CounterKey.counter.rawValue)
+	let counterField = viewForKey(CounterKey.counterField.rawValue)
+	let counterSlider = viewForKey(CounterKey.counterSlider.rawValue)
+	let decrementButton = viewForKey(CounterKey.decrement.rawValue)
+	let incrementButton = viewForKey(CounterKey.increment.rawValue)
+	let randomizeButton = viewForKey(CounterKey.randomize.rawValue)
+	return [
+		counterView?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
+		counterView?.topAnchor.constraint(equalTo: margins.topAnchor),
+		counterField?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
+		counterView.flatMap { counterField?.topAnchor.constraint(equalTo: $0.bottomAnchor) },
+		counterSlider?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
+		counterSlider?.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
+		counterSlider?.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
+		counterField.flatMap { counterSlider?.topAnchor.constraint(equalTo: $0.bottomAnchor) },
+		decrementButton?.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
+		decrementButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
+		incrementButton?.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
+		incrementButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
+		randomizeButton?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
+		randomizeButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
+		].compactMap{ $0 }
 }

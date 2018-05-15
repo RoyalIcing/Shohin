@@ -14,19 +14,24 @@ public class MessageMaker<Msg> {
 		case ignore
 		case event((UIEvent) -> Msg)
 		case textField((UITextField) -> Msg)
+		case control((UIControl, UIEvent) -> Msg)
 	}
 	
 	fileprivate let store: Store
 	
-	init(event makeMessage: @escaping (UIEvent) -> Msg) {
+	public init(event makeMessage: @escaping (UIEvent) -> Msg) {
 		self.store = .event(makeMessage)
 	}
 	
-	init(textField makeMessage: @escaping (UITextField) -> Msg) {
+	public init(textField makeMessage: @escaping (UITextField) -> Msg) {
 		self.store = .textField(makeMessage)
 	}
 	
-	init() {
+	public init(control makeMessage: @escaping (UIControl, UIEvent) -> Msg) {
+		self.store = .control(makeMessage)
+	}
+	
+	public init() {
 		self.store = .ignore
 	}
 }
@@ -44,9 +49,22 @@ public struct EventHandlingOptions {
 
 
 public struct Element<Msg> {
-	public let key: String
-	public let makeViewIfNeeded: (UIView?) -> UIView
-	public let applyToView: (UIView, (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) -> ()
+	public typealias MakeView = (UIView?) -> UIView
+	public typealias ViewAndRegisterEventHandler = (UIView, (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) -> ()
+	
+	public var key: String
+	public var makeViewIfNeeded: MakeView
+	public var applyToView: ViewAndRegisterEventHandler
+	
+	public init(
+		key: String,
+		makeViewIfNeeded: @escaping MakeView,
+		applyToView: @escaping ViewAndRegisterEventHandler
+		) {
+		self.key = key
+		self.makeViewIfNeeded = makeViewIfNeeded
+		self.applyToView = applyToView
+	}
 }
 
 
@@ -88,29 +106,31 @@ class EventHandler<Msg> : NSObject {
 		}
 	}
 	
+	@objc func performForControl(_ control: UIControl, event: UIEvent) {
+		if eventHandlingOptions.resignFirstResponder {
+			control.resignFirstResponder()
+		}
+		
+		switch messageMaker.store {
+		case let .control(makeMessage):
+			send(makeMessage(control, event))
+		default:
+			break
+		}
+	}
+	
 	@objc func doNothing(_ arg: Any?) {}
-	
-	private var actionForEvent: Selector {
-		return NSSelectorFromString("performForEvent:")
-		//return #selector(EventHandler.performForEvent(_:))
-	}
-	
-	private var actionForTextField: Selector {
-		return NSSelectorFromString("performForTextField:")
-	}
-	
-	private var voidAction: Selector {
-		return NSSelectorFromString("doNothing:")
-	}
 	
 	var action: Selector {
 		switch messageMaker.store {
 		case .event:
-			return actionForEvent
+			return NSSelectorFromString("performForEvent:")
 		case .textField:
-			return actionForTextField
+			return NSSelectorFromString("performForTextField:")
+		case .control:
+			return NSSelectorFromString("performForControl:event:")
 		case .ignore:
-			return voidAction
+			return NSSelectorFromString("doNothing:")
 		}
 	}
 }
