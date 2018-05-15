@@ -19,7 +19,6 @@ enum CounterMsg {
 	case decrement()
 	case randomize()
 	case setCounter(to: Int)
-	case setMultiplier(to: String)
 	case reset()
 }
 ~~~
@@ -27,6 +26,8 @@ enum CounterMsg {
 OK, let's connect the two with an update function, that takes a message and makes changes to a model.
 
 ~~~swift
+let generator10 = RandomGenerator(min: 0, max: 10, toMessage: CounterMsg.setCounter)
+
 func update(message: CounterMsg, u: inout Update<CounterModel, CounterMsg>) -> () {
 	switch message {
 	case .increment():
@@ -37,14 +38,13 @@ func update(message: CounterMsg, u: inout Update<CounterModel, CounterMsg>) -> (
 		u.send(generator10.command)
 	case let .setCounter(newValue):
 		u.model.counter = newValue
-	case let .setMultiplier(input):
-		u.model.multiplier = Int(input)
 	case .reset():
 		u.model.counter = 0
-		u.model.multiplier = 1
 	}
 }
 ~~~
+
+(Note we also have a random generator here. It can produce messages on its own, say from a random source of randomness. The `randomize` step produces a command which will end up sending another `setCounter` message.)
 
 Let's make a UI so people can view the model, and make changes to update it. Here we are making labels, fields, and buttons.
 
@@ -92,7 +92,7 @@ func view(model: CounterModel) -> [Element<CounterMsg>] {
 }
 ~~~
 
-We can use Autolayout too, making constraints between each UI element.
+We can use AutoLayout too, making constraints between each UI element.
 
 ~~~swift
 func layout(model: CounterModel, superview: UIView, viewForKey: (String) -> UIView?) -> [NSLayoutConstraint] {
