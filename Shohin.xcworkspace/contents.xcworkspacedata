@@ -2,6 +2,12 @@
 <Workspace
    version = "1.0">
    <FileRef
+      location = "group:README.md">
+   </FileRef>
+   <FileRef
       location = "container:Shohin.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Counter Shohin Example/Counter Shohin Example.xcodeproj">
    </FileRef>
 </Workspace>

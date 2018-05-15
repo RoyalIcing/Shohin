@@ -128,13 +128,13 @@ class EventHandlerSet<Msg> {
 public class KeyPathApplier<Root> {
 	private var applier: (Root) -> ()
 	
-	init<Value>(_ keyPath: ReferenceWritableKeyPath<Root, Value>, value: Value) {
+	public init<Value>(_ keyPath: ReferenceWritableKeyPath<Root, Value>, value: Value) {
 		self.applier = { root in
 			root[keyPath: keyPath] = value
 		}
 	}
 	
-	func apply(to root: Root) {
+	public func apply(to root: Root) {
 		applier(root)
 	}
 }
@@ -146,7 +146,7 @@ public enum ButtonProps<Msg> {
 	case tag(Int)
 	case keyPathApplier(KeyPathApplier<UIButton>)
 	
-	static func set<Value>(_ keyPath: ReferenceWritableKeyPath<UIButton, Value>, to value: Value) -> ButtonProps {
+	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<UIButton, Value>, to value: Value) -> ButtonProps {
 		return .keyPathApplier(KeyPathApplier(keyPath, value: value))
 	}
 	
@@ -191,11 +191,7 @@ struct ButtonElement<Msg> {
 	}
 }
 
-func button<Msg>(_ key: String, _ props: [ButtonProps<Msg>]) -> Element<Msg> {
-	return ButtonElement(key: key, props: props).toElement()
-}
-
-func button<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ButtonProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
+public func button<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ButtonProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
 	return ButtonElement(key: key.rawValue, props: props).toElement()
 }
 
@@ -242,16 +238,12 @@ struct LabelElement<Msg> {
 	}
 }
 
-func label<Msg>(_ key: String, _ props: [LabelProps<Msg>]) -> Element<Msg> {
-	return LabelElement(key: key, props: props).toElement()
-}
-
-func label<Key: RawRepresentable, Msg>(_ key: Key, _ props: [LabelProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
+public func label<Key: RawRepresentable, Msg>(_ key: Key, _ props: [LabelProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
 	return LabelElement(key: key.rawValue, props: props).toElement()
 }
 
 
-enum FieldProps<Msg> {
+public enum FieldProps<Msg> {
 	case text(String)
 	case textAlignment(NSTextAlignment)
 	case placeholder(String?)
@@ -301,11 +293,7 @@ struct FieldElement<Msg> {
 	}
 }
 
-func field<Msg>(_ key: String, _ props: [FieldProps<Msg>]) -> Element<Msg> {
-	return FieldElement(key: key, props: props).toElement()
-}
-
-func field<Key: RawRepresentable, Msg>(_ key: Key, _ props: [FieldProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
+public func field<Key: RawRepresentable, Msg>(_ key: Key, _ props: [FieldProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
 	return FieldElement(key: key.rawValue, props: props).toElement()
 }
 
@@ -353,9 +341,7 @@ class ViewReconciler<Msg> {
 	func view(forKey key: String) -> UIView? {
 		return keyToSubview[key]
 	}
-}
 
-extension ViewReconciler {
 	func usingModel<Model>(view: @escaping (Model) -> [Element<Msg>], layout: @escaping (_ model: Model, _ superview: UIView, _ viewForKey: (String) -> UIView?) -> [NSLayoutConstraint]) -> ((Model) -> ()) {
 		return { model in
 			self.update(view(model))
@@ -366,10 +352,10 @@ extension ViewReconciler {
 	}
 }
 
-struct Update<Model, Msg> {
+public struct Change<Model, Msg> {
 	var changeCount = 0
 	
-	var model: Model {
+	public var model: Model {
 		didSet {
 			changeCount += 1
 		}
@@ -381,7 +367,7 @@ struct Update<Model, Msg> {
 		self.model = model
 	}
 	
-	mutating func send(_ command: Command<Msg>) {
+	public mutating func send(_ command: Command<Msg>) {
 		commands.append(command)
 	}
 	
@@ -394,16 +380,26 @@ public class Program<Model, Msg> {
 	let reconciler: ViewReconciler<Msg>
 	let store: Store<Model, Msg>!
 	
-	init(view: UIView, model: Model, initialCommand: Command<Msg>, update: @escaping (Msg, inout Update<Model, Msg>) -> (), render: @escaping (Model) -> [Element<Msg>], layout: @escaping (Model, UIView, (String) -> UIView?) -> [NSLayoutConstraint]) {
+	public init(
+		view: UIView,
+		model: Model,
+		initialCommand: Command<Msg> = [],
+		update: @escaping (Msg, inout Change<Model, Msg>) -> () = { _, _ in },
+		render: @escaping (Model) -> [Element<Msg>] = { _ in [] },
+		layout: @escaping (Model, UIView, (String) -> UIView?) -> [NSLayoutConstraint] = { _, _, _ in [] }
+		) {
 		let reconciler = ViewReconciler<Msg>(view: view)
 		self.reconciler = reconciler
-		self.store = Store(initial: (model, initialCommand), update: { model, message in
-			var u = Update<Model, Msg>(model: model)
-			update(message, &u)
-			return (u.model, u.command)
-		}) { send in
-			reconciler.send = send
-			return reconciler.usingModel(view: render, layout: layout)
-		}
+		self.store = Store(
+			initial: (model, initialCommand),
+			update: { model, message in
+				var u = Change<Model, Msg>(model: model)
+				update(message, &u)
+				return (u.model, u.command)
+		},
+			connect: { send in
+				reconciler.send = send
+				return reconciler.usingModel(view: render, layout: layout)
+		})
 	}
 }

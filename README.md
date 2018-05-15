@@ -28,7 +28,7 @@ OK, let's connect the two with an update function, that takes a message and make
 ~~~swift
 let generator10 = RandomGenerator(min: 0, max: 10, toMessage: CounterMsg.setCounter)
 
-func update(message: CounterMsg, u: inout Update<CounterModel, CounterMsg>) -> () {
+func update(message: CounterMsg, u: inout Change<CounterModel, CounterMsg>) {
 	switch message {
 	case .increment():
 		u.model.counter += 1

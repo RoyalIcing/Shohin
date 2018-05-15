@@ -30,7 +30,7 @@ public struct Command<Msg> {
 		self.store = store
 	}
 	
-	init<S>(batch elements: S) where S : Sequence, Command == S.Element {
+	public init<S>(batch elements: S) where S : Sequence, Command == S.Element {
 		self.store = .batch(elements.map{ $0.store })
 	}
 	

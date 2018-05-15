@@ -24,49 +24,28 @@ enum CounterMsg {
 	case reset()
 }
 
-enum CounterKey: String {
-	case counter, increment, decrement, randomize, counterField, multiplierField
-}
-
 let generator10 = RandomGenerator(min: 0, max: 10, toMessage: CounterMsg.setCounter)
 
-func update(message: CounterMsg, u: inout Update<CounterModel, CounterMsg>) -> () {
+func update(message: CounterMsg, change: inout Change<CounterModel, CounterMsg>) {
 	switch message {
 	case .increment():
-		u.model.counter += 1
+		change.model.counter += 1
 	case .decrement():
-		u.model.counter -= 1
+		change.model.counter -= 1
 	case .randomize():
-		u.send(generator10.command)
+		change.send(generator10.command)
 	case let .setCounter(newValue):
-		u.model.counter = newValue
+		change.model.counter = newValue
 	case let .setMultiplier(input):
-		u.model.multiplier = Int(input)
+		change.model.multiplier = Int(input)
 	case .reset():
-		u.model.counter = 0
-		u.model.multiplier = 1
+		change.model.counter = 0
+		change.model.multiplier = 1
 	}
 }
 
-func layout(model: CounterModel, superview: UIView, viewForKey: (String) -> UIView?) -> [NSLayoutConstraint] {
-	let margins = superview.layoutMarginsGuide
-	let counterView = viewForKey(CounterKey.counter.rawValue)
-	let multiplierField = viewForKey(CounterKey.multiplierField.rawValue)
-	let decrementButton = viewForKey(CounterKey.decrement.rawValue)
-	let incrementButton = viewForKey(CounterKey.increment.rawValue)
-	let randomizeButton = viewForKey(CounterKey.randomize.rawValue)
-	return [
-		counterView?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		counterView?.topAnchor.constraint(equalTo: margins.topAnchor),
-		multiplierField?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		multiplierField?.topAnchor.constraint(equalTo: counterView!.bottomAnchor),
-		decrementButton?.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
-		decrementButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
-		incrementButton?.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
-		incrementButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
-		randomizeButton?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		randomizeButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
-		].compactMap{ $0 }
+enum CounterKey: String {
+	case counter, increment, decrement, randomize, counterField, multiplierField
 }
 
 func view(model: CounterModel) -> [Element<CounterMsg>] {
@@ -103,6 +82,27 @@ func view(model: CounterModel) -> [Element<CounterMsg>] {
 			.onChange { CounterMsg.setMultiplier(to: $0.text ?? "") }
 			]),
 	]
+}
+
+func layout(model: CounterModel, superview: UIView, viewForKey: (String) -> UIView?) -> [NSLayoutConstraint] {
+	let margins = superview.layoutMarginsGuide
+	let counterView = viewForKey(CounterKey.counter.rawValue)
+	let multiplierField = viewForKey(CounterKey.multiplierField.rawValue)
+	let decrementButton = viewForKey(CounterKey.decrement.rawValue)
+	let incrementButton = viewForKey(CounterKey.increment.rawValue)
+	let randomizeButton = viewForKey(CounterKey.randomize.rawValue)
+	return [
+		counterView?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
+		counterView?.topAnchor.constraint(equalTo: margins.topAnchor),
+		multiplierField?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
+		multiplierField?.topAnchor.constraint(equalTo: counterView!.bottomAnchor),
+		decrementButton?.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
+		decrementButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
+		incrementButton?.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
+		incrementButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
+		randomizeButton?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
+		randomizeButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
+		].compactMap{ $0 }
 }
 
 
