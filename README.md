@@ -52,7 +52,7 @@ We identify each element that the user interacts with using a key enum.
 
 ~~~swift
 enum CounterKey: String {
-	case counter, increment, decrement, randomize, counterField, multiplierField
+	case counter, increment, decrement, randomize, counterField
 }
 
 func view(model: CounterModel) -> [Element<CounterMsg>] {
@@ -83,11 +83,6 @@ func view(model: CounterModel) -> [Element<CounterMsg>] {
 			.title("Randomize", for: .normal),
 			.onTouchUpInside({ _ in CounterMsg.randomize() }),
 			]),
-		field(CounterKey.multiplierField, [
-			.tag(6),
-			.text(model.multiplier.map {"\($0)"} ?? ""),
-			.onChange { CounterMsg.setMultiplier(to: $0.text ?? "") }
-			]),
 	]
 }
 ~~~
@@ -98,15 +93,12 @@ We can use AutoLayout too, making constraints between each UI element.
 func layout(model: CounterModel, superview: UIView, viewForKey: (String) -> UIView?) -> [NSLayoutConstraint] {
 	let margins = superview.layoutMarginsGuide
 	let counterView = viewForKey(CounterKey.counter.rawValue)
-	let multiplierField = viewForKey(CounterKey.multiplierField.rawValue)
 	let decrementButton = viewForKey(CounterKey.decrement.rawValue)
 	let incrementButton = viewForKey(CounterKey.increment.rawValue)
 	let randomizeButton = viewForKey(CounterKey.randomize.rawValue)
 	return [
 		counterView?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
 		counterView?.topAnchor.constraint(equalTo: margins.topAnchor),
-		multiplierField?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		multiplierField?.topAnchor.constraint(equalTo: counterView!.bottomAnchor),
 		decrementButton?.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
 		decrementButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
 		incrementButton?.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
