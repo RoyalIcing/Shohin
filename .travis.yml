@@ -2,3 +2,5 @@ osx_image: xcode9.3
 language: objective-c
 xcode_project: Shohin.xcodeproj
 xcode_scheme: Shohin
+install: true
+script: xcodebuild test -workspace Shohin.xcworkspace -scheme Shohin -destination "platform=iOS Simulator,name=iPhone 8"
