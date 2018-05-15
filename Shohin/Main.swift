@@ -11,6 +11,7 @@ import UIKit
 
 public class MessageMaker<Msg> {
 	fileprivate enum Store {
+		case ignore
 		case event((UIEvent) -> Msg)
 		case textField((UITextField) -> Msg)
 	}
@@ -24,12 +25,28 @@ public class MessageMaker<Msg> {
 	init(textField makeMessage: @escaping (UITextField) -> Msg) {
 		self.store = .textField(makeMessage)
 	}
+	
+	init() {
+		self.store = .ignore
+	}
 }
+
+
+public struct EventHandlingOptions {
+	public var resignFirstResponder: Bool
+	
+	public init(
+		resignFirstResponder: Bool = false
+		) {
+		self.resignFirstResponder = resignFirstResponder
+	}
+}
+
 
 public struct Element<Msg> {
 	public let key: String
 	public let makeViewIfNeeded: (UIView?) -> UIView
-	public let applyToView: (UIView, (String, MessageMaker<Msg>) -> (Any?, Selector)) -> ()
+	public let applyToView: (UIView, (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) -> ()
 }
 
 
@@ -37,13 +54,16 @@ class EventHandler<Msg> : NSObject {
 	private let send: (Msg) -> ()
 	
 	let messageMaker: MessageMaker<Msg>
+	let eventHandlingOptions: EventHandlingOptions
 	
 	init(
 		send: @escaping (Msg) -> (),
-		messageMaker: MessageMaker<Msg>
+		messageMaker: MessageMaker<Msg>,
+		eventHandlingOptions: EventHandlingOptions
 		) {
 		self.send = send
 		self.messageMaker = messageMaker
+		self.eventHandlingOptions = eventHandlingOptions
 	}
 	
 	@objc func performForEvent(_ event: UIEvent) {
@@ -56,6 +76,10 @@ class EventHandler<Msg> : NSObject {
 	}
 	
 	@objc func performForTextField(_ textField: UITextField) {
+		if eventHandlingOptions.resignFirstResponder {
+			textField.resignFirstResponder()
+		}
+		
 		switch messageMaker.store {
 		case let .textField(makeMessage):
 			send(makeMessage(textField))
@@ -63,6 +87,8 @@ class EventHandler<Msg> : NSObject {
 			break
 		}
 	}
+	
+	@objc func doNothing(_ arg: Any?) {}
 	
 	private var actionForEvent: Selector {
 		return NSSelectorFromString("performForEvent:")
@@ -73,12 +99,18 @@ class EventHandler<Msg> : NSObject {
 		return NSSelectorFromString("performForTextField:")
 	}
 	
+	private var voidAction: Selector {
+		return NSSelectorFromString("doNothing:")
+	}
+	
 	var action: Selector {
 		switch messageMaker.store {
 		case .event:
 			return actionForEvent
 		case .textField:
 			return actionForTextField
+		case .ignore:
+			return voidAction
 		}
 	}
 }
@@ -87,7 +119,7 @@ class EventHandlerSet<Msg> {
 	var groupedHandlers: Dictionary<String, Dictionary<String, EventHandler<Msg>>> = [:]
 	var send: (Msg) -> () = { _ in }
 	
-	private func registerForElement(elementHandlers: inout Dictionary<String, EventHandler<Msg>>?, actionKey: String, messageMaker: MessageMaker<Msg>) -> EventHandler<Msg> {
+	private func registerForElement(elementHandlers: inout Dictionary<String, EventHandler<Msg>>?, actionKey: String, messageMaker: MessageMaker<Msg>, eventHandlingOptions: EventHandlingOptions) -> EventHandler<Msg> {
 		if elementHandlers == nil {
 			elementHandlers = [:]
 		}
@@ -101,21 +133,21 @@ class EventHandlerSet<Msg> {
 		
 		let eventHandler = EventHandler(send: { [weak self] (msg) in
 			self?.send(msg)
-			}, messageMaker: messageMaker)
+			}, messageMaker: messageMaker, eventHandlingOptions: eventHandlingOptions)
 		
 		elementHandlers?[actionKey] = eventHandler
 		return eventHandler
 	}
 	
-	func register(elementKey: String, actionKey: String, messageMaker: MessageMaker<Msg>) -> (Any?, Selector) {
-		let eventHandler = registerForElement(elementHandlers: &groupedHandlers[elementKey], actionKey: actionKey, messageMaker: messageMaker)
+	func register(elementKey: String, actionKey: String, messageMaker: MessageMaker<Msg>, eventHandlingOptions: EventHandlingOptions) -> (Any?, Selector) {
+		let eventHandler = registerForElement(elementHandlers: &groupedHandlers[elementKey], actionKey: actionKey, messageMaker: messageMaker, eventHandlingOptions: eventHandlingOptions)
 		
 		return (eventHandler, eventHandler.action)
 	}
 	
-	func curriedRegister(elementKey: String) -> (String, MessageMaker<Msg>) -> (Any?, Selector) {
-		return { (actionKey, messageMaker) in
-			self.register(elementKey: elementKey, actionKey: actionKey, messageMaker: messageMaker)
+	func curriedRegister(elementKey: String) -> (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector) {
+		return { (actionKey, messageMaker, eventHandlingOptions) in
+			self.register(elementKey: elementKey, actionKey: actionKey, messageMaker: messageMaker, eventHandlingOptions: eventHandlingOptions)
 		}
 	}
 	
@@ -150,10 +182,10 @@ public enum ButtonProps<Msg> {
 		return .keyPathApplier(KeyPathApplier(keyPath, value: value))
 	}
 	
-	fileprivate func apply(to button: UIButton, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector)) {
+	fileprivate func apply(to button: UIButton, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
 		switch self {
 		case let .onTouchUpInside(makeMessage):
-			let (target, action) = registerEventHandler("touchUpInside", MessageMaker(event: makeMessage))
+			let (target, action) = registerEventHandler("touchUpInside", MessageMaker(event: makeMessage), EventHandlingOptions())
 			button.addTarget(target, action: action, for: UIControlEvents.touchUpInside)
 		case let .title(title, for: state):
 			button.setTitle(title, for: state)
@@ -179,7 +211,7 @@ struct ButtonElement<Msg> {
 		return existing as? UIButton ?? defaultButton
 	}
 	
-	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector)) {
+	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
 		guard let button = view as? UIButton else { return }
 		
 		button.removeTarget(nil, action: nil, for: .allEvents)
@@ -201,7 +233,7 @@ public enum LabelProps<Msg> {
 	case textAlignment(NSTextAlignment)
 	case tag(Int)
 	
-	fileprivate func apply(to label: UILabel, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector)) {
+	fileprivate func apply(to label: UILabel, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
 		switch self {
 		case let .text(text):
 			label.text = text
@@ -227,7 +259,7 @@ struct LabelElement<Msg> {
 		return existing as? UILabel ?? defaultLabel
 	}
 	
-	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector)) {
+	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
 		guard let label = view as? UILabel else { return }
 		
 		props.forEach { $0.apply(to: label, registerEventHandler: registerEventHandler) }
@@ -247,10 +279,13 @@ public enum FieldProps<Msg> {
 	case text(String)
 	case textAlignment(NSTextAlignment)
 	case placeholder(String?)
+	case keyboardType(UIKeyboardType)
+	case returnKeyType(UIReturnKeyType)
 	case tag(Int)
 	case onChange((UITextField) -> Msg)
+	case on(UIControlEvents, toMessage: ((UITextField) -> Msg)?)
 	
-	fileprivate func apply(to field: UITextField, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector)) {
+	fileprivate func apply(to field: UITextField, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
 		switch self {
 		case let .text(text):
 			field.text = text
@@ -258,11 +293,19 @@ public enum FieldProps<Msg> {
 			field.textAlignment = alignment
 		case let .placeholder(text):
 			field.placeholder = text
+		case let .keyboardType(keyboardType):
+			field.keyboardType = keyboardType
+		case let .returnKeyType(returnKeyType):
+			field.returnKeyType = returnKeyType
 		case let .tag(tag):
 			field.tag = tag
 		case let .onChange(makeMessage):
-			let (target, action) = registerEventHandler("editingChanged", MessageMaker(textField: makeMessage))
+			let (target, action) = registerEventHandler("editingChanged", MessageMaker(textField: makeMessage), EventHandlingOptions())
 			field.addTarget(target, action: action, for: UIControlEvents.editingChanged)
+		case let .on(controlEvents, toMessage):
+			let key = String(describing: controlEvents)
+			let (target, action) = registerEventHandler(key, toMessage.map { MessageMaker(textField: $0) } ?? MessageMaker(), EventHandlingOptions())
+			field.addTarget(target, action: action, for: controlEvents)
 		}
 	}
 }
@@ -281,7 +324,7 @@ struct FieldElement<Msg> {
 		return existing as? UITextField ?? makeDefault()
 	}
 	
-	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>) -> (Any?, Selector)) {
+	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
 		guard let field = view as? UITextField else { return }
 		
 		field.removeTarget(nil, action: nil, for: .allEvents)

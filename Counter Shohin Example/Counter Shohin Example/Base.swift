@@ -74,7 +74,11 @@ func viewCounter(model: CounterModel) -> [Element<CounterMsg>] {
 		field(CounterKey.counterField, [
 			.tag(2),
 			.text("\(model.counter)"),
-			.onChange { CounterMsg.setCounter(to: $0.text.flatMap(Int.init) ?? 0) }
+			.returnKeyType(.done),
+			.on(.editingDidEndOnExit) { textField in
+				let value = textField.text.flatMap(Int.init) ?? 0
+				return CounterMsg.setCounter(to: value)
+			}
 			]),
 		button(CounterKey.increment, [
 			.tag(3),
