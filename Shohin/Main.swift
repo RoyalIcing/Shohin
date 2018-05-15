@@ -13,7 +13,6 @@ public class MessageMaker<Msg> {
 	fileprivate enum Store {
 		case ignore
 		case event((UIEvent) -> Msg)
-		case textField((UITextField) -> Msg)
 		case control((UIControl, UIEvent) -> Msg)
 	}
 	
@@ -23,12 +22,8 @@ public class MessageMaker<Msg> {
 		self.store = .event(makeMessage)
 	}
 	
-	public init(textField makeMessage: @escaping (UITextField) -> Msg) {
-		self.store = .textField(makeMessage)
-	}
-	
-	public init(control makeMessage: @escaping (UIControl, UIEvent) -> Msg) {
-		self.store = .control(makeMessage)
+	public init<Control: UIControl>(control makeMessage: @escaping (Control, UIEvent) -> Msg) {
+		self.store = .control({ makeMessage($0 as! Control, $1) })
 	}
 	
 	public init() {
@@ -93,19 +88,6 @@ class EventHandler<Msg> : NSObject {
 		}
 	}
 	
-	@objc func performForTextField(_ textField: UITextField) {
-		if eventHandlingOptions.resignFirstResponder {
-			textField.resignFirstResponder()
-		}
-		
-		switch messageMaker.store {
-		case let .textField(makeMessage):
-			send(makeMessage(textField))
-		default:
-			break
-		}
-	}
-	
 	@objc func performForControl(_ control: UIControl, event: UIEvent) {
 		if eventHandlingOptions.resignFirstResponder {
 			control.resignFirstResponder()
@@ -125,8 +107,6 @@ class EventHandler<Msg> : NSObject {
 		switch messageMaker.store {
 		case .event:
 			return NSSelectorFromString("performForEvent:")
-		case .textField:
-			return NSSelectorFromString("performForTextField:")
 		case .control:
 			return NSSelectorFromString("performForControl:event:")
 		case .ignore:
@@ -189,175 +169,6 @@ public class KeyPathApplier<Root> {
 	public func apply(to root: Root) {
 		applier(root)
 	}
-}
-
-
-public enum ButtonProps<Msg> {
-	case onTouchUpInside((UIEvent) -> Msg)
-	case title(String?, for: UIControlState)
-	case tag(Int)
-	case keyPathApplier(KeyPathApplier<UIButton>)
-	
-	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<UIButton, Value>, to value: Value) -> ButtonProps {
-		return .keyPathApplier(KeyPathApplier(keyPath, value: value))
-	}
-	
-	fileprivate func apply(to button: UIButton, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
-		switch self {
-		case let .onTouchUpInside(makeMessage):
-			let (target, action) = registerEventHandler("touchUpInside", MessageMaker(event: makeMessage), EventHandlingOptions())
-			button.addTarget(target, action: action, for: UIControlEvents.touchUpInside)
-		case let .title(title, for: state):
-			button.setTitle(title, for: state)
-		case let .tag(tag):
-			button.tag = tag
-		case let .keyPathApplier(applier):
-			applier.apply(to: button)
-		}
-	}
-}
-
-struct ButtonElement<Msg> {
-	let key: String
-	let props: [ButtonProps<Msg>]
-	
-	var defaultButton: UIButton {
-		let button = UIButton()
-		button.translatesAutoresizingMaskIntoConstraints = false
-		return button
-	}
-	
-	func prepare(existing: UIView?) -> UIView {
-		return existing as? UIButton ?? defaultButton
-	}
-	
-	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
-		guard let button = view as? UIButton else { return }
-		
-		button.removeTarget(nil, action: nil, for: .allEvents)
-		props.forEach { $0.apply(to: button, registerEventHandler: registerEventHandler) }
-	}
-	
-	func toElement() -> Element<Msg> {
-		return Element(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
-	}
-}
-
-public func button<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ButtonProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
-	return ButtonElement(key: key.rawValue, props: props).toElement()
-}
-
-
-public enum LabelProps<Msg> {
-	case text(String)
-	case textAlignment(NSTextAlignment)
-	case tag(Int)
-	
-	fileprivate func apply(to label: UILabel, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
-		switch self {
-		case let .text(text):
-			label.text = text
-		case let .textAlignment(alignment):
-			label.textAlignment = alignment
-		case let .tag(tag):
-			label.tag = tag
-		}
-	}
-}
-
-struct LabelElement<Msg> {
-	let key: String
-	let props: [LabelProps<Msg>]
-	
-	private var defaultLabel: UILabel {
-		let label = UILabel()
-		label.translatesAutoresizingMaskIntoConstraints = false
-		return label
-	}
-	
-	func prepare(existing: UIView?) -> UIView {
-		return existing as? UILabel ?? defaultLabel
-	}
-	
-	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
-		guard let label = view as? UILabel else { return }
-		
-		props.forEach { $0.apply(to: label, registerEventHandler: registerEventHandler) }
-	}
-	
-	func toElement() -> Element<Msg> {
-		return Element(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
-	}
-}
-
-public func label<Key: RawRepresentable, Msg>(_ key: Key, _ props: [LabelProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
-	return LabelElement(key: key.rawValue, props: props).toElement()
-}
-
-
-public enum FieldProps<Msg> {
-	case text(String)
-	case textAlignment(NSTextAlignment)
-	case placeholder(String?)
-	case keyboardType(UIKeyboardType)
-	case returnKeyType(UIReturnKeyType)
-	case tag(Int)
-	case onChange((UITextField) -> Msg)
-	case on(UIControlEvents, toMessage: ((UITextField) -> Msg)?)
-	
-	fileprivate func apply(to field: UITextField, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
-		switch self {
-		case let .text(text):
-			field.text = text
-		case let .textAlignment(alignment):
-			field.textAlignment = alignment
-		case let .placeholder(text):
-			field.placeholder = text
-		case let .keyboardType(keyboardType):
-			field.keyboardType = keyboardType
-		case let .returnKeyType(returnKeyType):
-			field.returnKeyType = returnKeyType
-		case let .tag(tag):
-			field.tag = tag
-		case let .onChange(makeMessage):
-			let (target, action) = registerEventHandler("editingChanged", MessageMaker(textField: makeMessage), EventHandlingOptions())
-			field.addTarget(target, action: action, for: UIControlEvents.editingChanged)
-		case let .on(controlEvents, toMessage):
-			let key = String(describing: controlEvents)
-			let (target, action) = registerEventHandler(key, toMessage.map { MessageMaker(textField: $0) } ?? MessageMaker(), EventHandlingOptions())
-			field.addTarget(target, action: action, for: controlEvents)
-		}
-	}
-}
-
-struct FieldElement<Msg> {
-	let key: String
-	let props: [FieldProps<Msg>]
-	
-	private func makeDefault() -> UITextField {
-		let field = UITextField()
-		field.translatesAutoresizingMaskIntoConstraints = false
-		return field
-	}
-	
-	func prepare(existing: UIView?) -> UIView {
-		return existing as? UITextField ?? makeDefault()
-	}
-	
-	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
-		guard let field = view as? UITextField else { return }
-		
-		field.removeTarget(nil, action: nil, for: .allEvents)
-		props.forEach { $0.apply(to: field, registerEventHandler: registerEventHandler) }
-	}
-	
-	func toElement() -> Element<Msg> {
-		return Element(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
-	}
-}
-
-public func field<Key: RawRepresentable, Msg>(_ key: Key, _ props: [FieldProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
-	return FieldElement(key: key.rawValue, props: props).toElement()
 }
 
 

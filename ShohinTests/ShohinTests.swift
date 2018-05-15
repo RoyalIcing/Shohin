@@ -58,7 +58,7 @@ func view(model: CounterModel) -> [Element<CounterMsg>] {
 		field(CounterKey.counterField, [
 			.tag(2),
 			.text("\(model.counter)"),
-			.onChange { CounterMsg.setCounter(to: $0.text.flatMap(Int.init) ?? 0) }
+			.on(.valueChanged, toMessage: { textField, event in CounterMsg.setCounter(to: textField.text.flatMap{ (text: String) in Int(text) } ?? 0) })
 			]),
 		button(CounterKey.increment, [
 			.tag(3),
@@ -75,27 +75,19 @@ func view(model: CounterModel) -> [Element<CounterMsg>] {
 			.tag(5),
 			.title("Randomize", for: .normal),
 			.onTouchUpInside({ _ in CounterMsg.randomize() }),
-			]),
-		field(CounterKey.multiplierField, [
-			.tag(6),
-			.text(model.multiplier.map {"\($0)"} ?? ""),
-			.onChange { CounterMsg.setMultiplier(to: $0.text ?? "") }
-			]),
+			])
 	]
 }
 
 func layout(model: CounterModel, superview: UIView, viewForKey: (String) -> UIView?) -> [NSLayoutConstraint] {
 	let margins = superview.layoutMarginsGuide
 	let counterView = viewForKey(CounterKey.counter.rawValue)
-	let multiplierField = viewForKey(CounterKey.multiplierField.rawValue)
 	let decrementButton = viewForKey(CounterKey.decrement.rawValue)
 	let incrementButton = viewForKey(CounterKey.increment.rawValue)
 	let randomizeButton = viewForKey(CounterKey.randomize.rawValue)
 	return [
 		counterView?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
 		counterView?.topAnchor.constraint(equalTo: margins.topAnchor),
-		multiplierField?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		multiplierField?.topAnchor.constraint(equalTo: counterView!.bottomAnchor),
 		decrementButton?.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
 		decrementButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
 		incrementButton?.trailingAnchor.constraint(equalTo: margins.trailingAnchor),

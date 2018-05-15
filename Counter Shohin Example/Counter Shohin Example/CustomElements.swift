@@ -10,45 +10,46 @@ import UIKit
 import Shohin
 
 
-public enum SliderProps<Msg> {
-	case on(UIControlEvents, toMessage: (UISlider, UIEvent) -> Msg)
-	case keyPathApplier(KeyPathApplier<UISlider>)
+public enum ControlProps<Msg, Control: UIControl> {
+	case on(UIControlEvents, toMessage: (Control, UIEvent) -> Msg)
+	case keyPathApplier(KeyPathApplier<Control>)
 	
-	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<UISlider, Value>, to value: Value) -> SliderProps {
+	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<Control, Value>, to value: Value) -> ControlProps {
 		return .keyPathApplier(KeyPathApplier(keyPath, value: value))
 	}
 	
-	fileprivate func apply(to slider: UISlider, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
+	fileprivate func apply(to control: Control, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
 		switch self {
 		case let .on(controlEvents, toMessage):
 			let key = String(describing: controlEvents)
-			let (target, action) = registerEventHandler(key, MessageMaker(control: { toMessage($0 as! UISlider, $1) }), EventHandlingOptions())
-			slider.addTarget(target, action: action, for: controlEvents)
+			let (target, action) = registerEventHandler(key, MessageMaker(control: toMessage), EventHandlingOptions())
+			control.addTarget(target, action: action, for: controlEvents)
 		case let .keyPathApplier(applier):
-			applier.apply(to: slider)
+			applier.apply(to: control)
 		}
 	}
 }
 
-struct SliderElement<Msg> {
+fileprivate struct ControlElement<Msg, Control: UIControl> {
 	let key: String
-	let props: [SliderProps<Msg>]
+	let props: [ControlProps<Msg, Control>]
+	fileprivate var _makeDefaultControl: () -> Control
 	
-	var defaultSlider: UISlider {
-		let slider = UISlider()
-		slider.translatesAutoresizingMaskIntoConstraints = false
-		return slider
+	func makeDefault() -> Control {
+		let control = _makeDefaultControl()
+		control.translatesAutoresizingMaskIntoConstraints = false
+		return control
 	}
 	
 	func prepare(existing: UIView?) -> UIView {
-		return existing as? UISlider ?? defaultSlider
+		return existing as? Control ?? makeDefault()
 	}
 	
 	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
-		guard let button = view as? UISlider else { return }
+		guard let control = view as? Control else { return }
 		
-		button.removeTarget(nil, action: nil, for: .allEvents)
-		props.forEach { $0.apply(to: button, registerEventHandler: registerEventHandler) }
+		control.removeTarget(nil, action: nil, for: .allEvents)
+		props.forEach { $0.apply(to: control, registerEventHandler: registerEventHandler) }
 	}
 	
 	func toElement() -> Element<Msg> {
@@ -56,6 +57,32 @@ struct SliderElement<Msg> {
 	}
 }
 
-public func slider<Key: RawRepresentable, Msg>(_ key: Key, _ props: [SliderProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
-	return SliderElement(key: key.rawValue, props: props).toElement()
+public func control<Key: RawRepresentable, Msg, Control: UIControl>(makeDefault: @escaping () -> Control) -> (_ key: Key, _ props: [ControlProps<Msg, Control>]) -> Element<Msg> where Key.RawValue == String {
+	return { key, props in
+		return ControlElement(key: key.rawValue, props: props, _makeDefaultControl: makeDefault).toElement()
+	}
 }
+
+
+extension ControlProps where Control : UISlider {
+	static func value(_ value: Float) -> ControlProps {
+		return .set(\.value, to: value)
+	}
+	
+	static func minimumValue(_ value: Float) -> ControlProps {
+		return .set(\.minimumValue, to: value)
+	}
+	
+	static func maximumValue(_ value: Float) -> ControlProps {
+		return .set(\.maximumValue, to: value)
+	}
+	
+	static var isContinuous: ControlProps {
+		return .set(\.isContinuous, to: true)
+	}
+}
+
+public func slider<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProps<Msg, UISlider>]) -> Element<Msg> where Key.RawValue == String {
+	return control(makeDefault: { UISlider() })(key, props)
+}
+

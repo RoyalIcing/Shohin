@@ -54,16 +54,16 @@ func viewCounter(model: CounterModel) -> [Element<CounterMsg>] {
 			.tag(2),
 			.text("\(model.counter)"),
 			.returnKeyType(.done),
-			.on(.editingDidEndOnExit) { textField in
+			.on(.editingDidEndOnExit) { textField, event in
 				let value = textField.text.flatMap(Int.init) ?? 0
 				return CounterMsg.setCounter(to: value)
 			}
 			]),
 		slider(CounterKey.counterSlider, [
-			.set(\.value, to: Float(model.counter)),
-			.set(\.minimumValue, to: 0),
-			.set(\.maximumValue, to: 10),
-			.set(\.isContinuous, to: true),
+			.value(Float(model.counter)),
+			.minimumValue(0),
+			.maximumValue(10),
+			.isContinuous,
 			.on(.valueChanged) { slider, event in
 				let value = Int(slider.value)
 				return CounterMsg.setCounter(to: value)
