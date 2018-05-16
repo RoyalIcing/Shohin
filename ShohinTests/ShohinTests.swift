@@ -24,7 +24,7 @@ enum CounterMsg {
 	case reset()
 }
 
-let generator10 = RandomGenerator(min: 0, max: 10, toMessage: CounterMsg.setCounter)
+let intGenerator = RandomGenerator(toMessage: CounterMsg.setCounter)
 
 func update(message: CounterMsg, change: inout Change<CounterModel, CounterMsg>) {
 	switch message {
@@ -33,7 +33,7 @@ func update(message: CounterMsg, change: inout Change<CounterModel, CounterMsg>)
 	case .decrement():
 		change.model.counter -= 1
 	case .randomize():
-		change.send(generator10.command)
+		change.send(intGenerator.generate(min: 0, max: 10))
 	case let .setCounter(newValue):
 		change.model.counter = newValue
 	case let .setMultiplier(input):

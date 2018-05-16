@@ -219,9 +219,8 @@ class ViewReconciler<Msg> {
 	func usingModel<Model>(view: @escaping (Model) -> [Element<Msg>], layout: @escaping (_ model: Model, _ superview: UIView, _ viewForKey: (String) -> UIView?) -> [NSLayoutConstraint]) -> ((Model) -> ()) {
 		return { model in
 			self.update(view(model))
-			for constraint in layout(model, self.view, self.view(forKey:)) {
-				constraint.isActive = true
-			}
+			let constraints = layout(model, self.view, self.view(forKey:))
+			NSLayoutConstraint.activate(constraints)
 		}
 	}
 }

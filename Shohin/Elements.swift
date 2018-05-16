@@ -274,3 +274,25 @@ public func slider<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProp
 	return control(makeDefault: { UISlider() })(key, props)
 }
 
+
+extension ControlProps where Control : UIStepper {
+	public static func value(_ value: Double) -> ControlProps {
+		return .set(\.value, to: value)
+	}
+	
+	public static func minimumValue(_ value: Double) -> ControlProps {
+		return .set(\.minimumValue, to: value)
+	}
+	
+	public static func maximumValue(_ value: Double) -> ControlProps {
+		return .set(\.maximumValue, to: value)
+	}
+	
+	public static var isContinuous: ControlProps {
+		return .set(\.isContinuous, to: true)
+	}
+}
+
+public func stepper<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProps<Msg, UIStepper>]) -> Element<Msg> where Key.RawValue == String {
+	return control(makeDefault: { UIStepper() })(key, props)
+}

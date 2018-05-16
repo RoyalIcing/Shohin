@@ -10,7 +10,7 @@ import Foundation
 
 
 public struct Command<Msg> {
-	fileprivate indirect enum Store<Msg> {
+	indirect enum Store<Msg> {
 		case routine(() -> Msg)
 		case batch([Store<Msg>])
 		
@@ -26,7 +26,7 @@ public struct Command<Msg> {
 	
 	private let store: Store<Msg>
 	
-	fileprivate init(store: Store<Msg>) {
+	init(store: Store<Msg>) {
 		self.store = store
 	}
 	
@@ -42,28 +42,6 @@ public struct Command<Msg> {
 extension Command : ExpressibleByArrayLiteral {
 	public init(arrayLiteral elements: Command...) {
 		self.store = .batch(elements.map{ $0.store })
-	}
-}
-
-public class RandomGenerator<Msg> {
-	let min: Int
-	let max: Int
-	let toMessage : (Int) -> Msg
-	
-	public init(min: Int, max: Int, toMessage: @escaping (Int) -> Msg) {
-		self.min = min
-		self.max = max
-		self.toMessage = toMessage
-	}
-	
-	public var command: Command<Msg> {
-		let min = self.min
-		let max = self.max
-		let toMessage = self.toMessage
-		return Command(store: Command.Store.routine({
-			let value = min + Int(arc4random_uniform(UInt32(max - min + 1)))
-			return toMessage(value)
-		}))
 	}
 }
 

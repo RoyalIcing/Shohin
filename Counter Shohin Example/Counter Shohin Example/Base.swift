@@ -12,6 +12,7 @@ import Shohin
 
 struct CounterModel {
 	var counter: Int = 0
+	var maximumValue: Int = 10
 }
 
 enum CounterMsg {
@@ -19,10 +20,11 @@ enum CounterMsg {
 	case decrement()
 	case randomize()
 	case setCounter(to: Int)
+	case setMaximumValue(to: Int)
 	case reset()
 }
 
-let generator10 = RandomGenerator(min: 0, max: 10, toMessage: CounterMsg.setCounter)
+let intGenerator = RandomGenerator(toMessage: CounterMsg.setCounter)
 
 func updateCounter(message: CounterMsg, change: inout Change<CounterModel, CounterMsg>) {
 	switch message {
@@ -31,16 +33,18 @@ func updateCounter(message: CounterMsg, change: inout Change<CounterModel, Count
 	case .decrement():
 		change.model.counter -= 1
 	case .randomize():
-		change.send(generator10.command)
+		change.send(intGenerator.generate(min: 0, max: change.model.maximumValue))
 	case let .setCounter(newValue):
 		change.model.counter = newValue
+	case let .setMaximumValue(newValue):
+		change.model.maximumValue = newValue
 	case .reset():
 		change.model.counter = 0
 	}
 }
 
 enum CounterKey: String {
-	case counter, increment, decrement, randomize, counterField, counterSlider
+	case counter, increment, decrement, randomize, counterField, counterSlider, maximumValueStepper
 }
 
 func viewCounter(model: CounterModel) -> [Element<CounterMsg>] {
@@ -59,10 +63,18 @@ func viewCounter(model: CounterModel) -> [Element<CounterMsg>] {
 				return CounterMsg.setCounter(to: value)
 			}
 			]),
+		stepper(CounterKey.maximumValueStepper, [
+			.value(Double(model.maximumValue)),
+			.minimumValue(1),
+			.on(.valueChanged) { stepper, event in
+				let value = Int(stepper.value)
+				return CounterMsg.setMaximumValue(to: value)
+			}
+			]),
 		slider(CounterKey.counterSlider, [
 			.value(Float(model.counter)),
 			.minimumValue(0),
-			.maximumValue(10),
+			.maximumValue(Float(model.maximumValue)),
 			.isContinuous,
 			.on(.valueChanged) { slider, event in
 				let value = Int(slider.value)
@@ -90,26 +102,28 @@ func viewCounter(model: CounterModel) -> [Element<CounterMsg>] {
 
 func layoutCounter(model: CounterModel, superview: UIView, viewForKey: (String) -> UIView?) -> [NSLayoutConstraint] {
 	let margins = superview.layoutMarginsGuide
-	let counterView = viewForKey(CounterKey.counter.rawValue)
-	let counterField = viewForKey(CounterKey.counterField.rawValue)
-	let counterSlider = viewForKey(CounterKey.counterSlider.rawValue)
-	let decrementButton = viewForKey(CounterKey.decrement.rawValue)
-	let incrementButton = viewForKey(CounterKey.increment.rawValue)
-	let randomizeButton = viewForKey(CounterKey.randomize.rawValue)
+	let counterView = viewForKey(CounterKey.counter.rawValue)!
+	let counterField = viewForKey(CounterKey.counterField.rawValue)!
+	let counterSlider = viewForKey(CounterKey.counterSlider.rawValue)!
+	let maximumValueStepper = viewForKey(CounterKey.maximumValueStepper.rawValue)!
+	let decrementButton = viewForKey(CounterKey.decrement.rawValue)!
+	let incrementButton = viewForKey(CounterKey.increment.rawValue)!
+	let randomizeButton = viewForKey(CounterKey.randomize.rawValue)!
 	return [
-		counterView?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		counterView?.topAnchor.constraint(equalTo: margins.topAnchor),
-		counterField?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		counterView.flatMap { counterField?.topAnchor.constraint(equalTo: $0.bottomAnchor) },
-		counterSlider?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		counterSlider?.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
-		counterSlider?.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
-		counterField.flatMap { counterSlider?.topAnchor.constraint(equalTo: $0.bottomAnchor) },
-		decrementButton?.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
-		decrementButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
-		incrementButton?.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
-		incrementButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
-		randomizeButton?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		randomizeButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
-		].compactMap{ $0 }
+		counterView.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
+		counterView.topAnchor.constraint(equalTo: margins.topAnchor),
+		counterField.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
+		counterField.topAnchor.constraint(equalTo: counterView.bottomAnchor),
+		maximumValueStepper.topAnchor.constraint(equalTo: counterField.bottomAnchor),
+		maximumValueStepper.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
+		counterSlider.leadingAnchor.constraint(equalTo: maximumValueStepper.trailingAnchor, constant: 20.0),
+		counterSlider.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
+		counterSlider.topAnchor.constraint(equalTo: counterField.bottomAnchor),
+		decrementButton.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
+		decrementButton.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
+		incrementButton.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
+		incrementButton.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
+		randomizeButton.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
+		randomizeButton.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
+		]
 }
