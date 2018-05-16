@@ -118,4 +118,8 @@ mainView.backgroundColor = #colorLiteral(red: 0.239215686917305, green: 0.674509
 let program = Program(view: mainView, model: CounterModel(), initialCommand: [], update: update, render: render, layout: layout)
 ~~~
 
-That's it! You have a model, which is presented as a view. Interactions produce messages which then update the model. This causes the view to be refreshed.
+That's it!
+
+1. You have a **model**, which is presented (**rendered** and **laid out**) to the user as views.
+2. Interactions that the user makes (UI events) produce **messages**, which **update** the model.
+3. These **updates** cause the views to be **rendered** and **laid out** again.
