@@ -253,19 +253,19 @@ public func control<Key: RawRepresentable, Msg, Control: UIControl>(makeDefault:
 
 
 extension ControlProps where Control : UISlider {
-	static func value(_ value: Float) -> ControlProps {
+	public static func value(_ value: Float) -> ControlProps {
 		return .set(\.value, to: value)
 	}
 	
-	static func minimumValue(_ value: Float) -> ControlProps {
+	public static func minimumValue(_ value: Float) -> ControlProps {
 		return .set(\.minimumValue, to: value)
 	}
 	
-	static func maximumValue(_ value: Float) -> ControlProps {
+	public static func maximumValue(_ value: Float) -> ControlProps {
 		return .set(\.maximumValue, to: value)
 	}
 	
-	static var isContinuous: ControlProps {
+	public static var isContinuous: ControlProps {
 		return .set(\.isContinuous, to: true)
 	}
 }
