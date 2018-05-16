@@ -19,7 +19,6 @@ enum CounterMsg {
 	case decrement()
 	case randomize()
 	case setCounter(to: Int)
-	case reset()
 }
 ~~~
 
@@ -38,8 +37,6 @@ func update(message: CounterMsg, u: inout Change<CounterModel, CounterMsg>) {
 		u.send(intGenerator.generate(min: 0, max: 10))
 	case let .setCounter(newValue):
 		u.model.counter = newValue
-	case .reset():
-		u.model.counter = 0
 	}
 }
 ~~~
@@ -58,31 +55,26 @@ enum CounterKey: String {
 func render(model: CounterModel) -> [Element<CounterMsg>] {
 	return [
 		label(CounterKey.counter, [
-			.tag(1),
-			.text("\(model.counter)"),
+			.text("Counter:"),
 			.textAlignment(.center),
-			]),
+		]),
 		field(CounterKey.counterField, [
-			.tag(2),
 			.text("\(model.counter)"),
 			.onChange { CounterMsg.setCounter(to: $0.text.flatMap(Int.init) ?? 0) }
-			]),
+		]),
 		button(CounterKey.increment, [
-			.tag(3),
 			.title("Increment", for: .normal),
-			.onTouchUpInside { _ in CounterMsg.increment() },
-			]),
+			.onPress(CounterMsg.increment),
+		]),
 		button(CounterKey.decrement, [
-			.tag(4),
 			.title("Decrement", for: .normal),
-			.onTouchUpInside({ _ in CounterMsg.decrement() }),
+			.onPress(CounterMsg.decrement),
 			.set(\.tintColor, to: UIColor.red),
-			]),
+		]),
 		button(CounterKey.randomize, [
-			.tag(5),
 			.title("Randomize", for: .normal),
-			.onTouchUpInside({ _ in CounterMsg.randomize() }),
-			]),
+			.onPress(CounterMsg.randomize),
+		]),
 	]
 }
 ~~~
@@ -92,20 +84,20 @@ We can use AutoLayout too, making constraints between each UI element, and to th
 ~~~swift
 func layout(model: CounterModel, context: LayoutContext) -> [NSLayoutConstraint] {
 	let margins = context.marginsGuide
-	let counterView = context.view(CounterKey.counter)
-	let decrementButton = context.view(CounterKey.decrement)
-	let incrementButton = context.view(CounterKey.increment)
-	let randomizeButton = context.view(CounterKey.randomize)
+	let counterView = context.view(CounterKey.counter)!
+	let decrementButton = context.view(CounterKey.decrement)!
+	let incrementButton = context.view(CounterKey.increment)!
+	let randomizeButton = context.view(CounterKey.randomize)!
 	return [
-		counterView?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		counterView?.topAnchor.constraint(equalTo: margins.topAnchor),
-		decrementButton?.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
-		decrementButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
-		incrementButton?.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
-		incrementButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
-		randomizeButton?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		randomizeButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
-		].compactMap{ $0 }
+		counterView.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
+		counterView.topAnchor.constraint(equalTo: margins.topAnchor),
+		decrementButton.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
+		decrementButton.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
+		incrementButton.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
+		incrementButton.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
+		randomizeButton.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
+		randomizeButton.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
+	]
 }
 ~~~
 
@@ -118,7 +110,7 @@ mainView.backgroundColor = #colorLiteral(red: 0.239215686917305, green: 0.674509
 let program = Program(view: mainView, model: CounterModel(), initialCommand: [], update: update, render: render, layout: layout)
 ~~~
 
-That's it!
+We now have an interactive app. In summary:
 
 1. You have a **model**, which is presented (**rendered** and **laid out**) to the user as views.
 2. Interactions that the user makes (UI events) produce **messages**, which **update** the model.
