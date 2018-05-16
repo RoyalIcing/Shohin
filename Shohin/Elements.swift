@@ -9,17 +9,27 @@
 import UIKit
 
 
-public class KeyPathApplier<Root> {
+public class ChangeApplier<Root> {
 	private var applier: (Root) -> ()
 	
-	public init<Value>(_ keyPath: ReferenceWritableKeyPath<Root, Value>, value: Value) {
-		self.applier = { root in
+	init(applier: @escaping (Root) -> ()) {
+		self.applier = applier
+	}
+	
+	public convenience init<Value>(_ keyPath: ReferenceWritableKeyPath<Root, Value>, value: Value) {
+		self.init(applier: { root in
 			root[keyPath: keyPath] = value
-		}
+		})
 	}
 	
 	public func apply(to root: Root) {
 		applier(root)
+	}
+}
+
+extension ChangeApplier where Root : AnyObject {
+	public convenience init(makeChanges: @escaping (Root) -> ()) {
+		self.init(applier: makeChanges)
 	}
 }
 
@@ -37,70 +47,15 @@ extension ViewProps {
 }
 
 
-public enum ButtonProps<Msg> : ViewProps {
-	typealias View = UIButton
-	
-	case onPress((UIEvent) -> Msg)
-	case title(String?, for: UIControlState)
-	case keyPathApplier(KeyPathApplier<UIButton>)
-	
-	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<UIButton, Value>, to value: Value) -> ButtonProps {
-		return .keyPathApplier(KeyPathApplier(keyPath, value: value))
-	}
-	
-	fileprivate func apply(to button: UIButton, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
-		switch self {
-		case let .onPress(makeMessage):
-			let (target, action) = registerEventHandler("touchUpInside", MessageMaker(event: makeMessage), EventHandlingOptions())
-			button.addTarget(target, action: action, for: UIControlEvents.touchUpInside)
-		case let .title(title, for: state):
-			button.setTitle(title, for: state)
-		case let .keyPathApplier(applier):
-			applier.apply(to: button)
-		}
-	}
-}
-
-struct ButtonElement<Msg> {
-	let key: String
-	let props: [ButtonProps<Msg>]
-	
-	var defaultButton: UIButton {
-		let button = UIButton()
-		button.translatesAutoresizingMaskIntoConstraints = false
-		return button
-	}
-	
-	func prepare(existing: UIView?) -> UIView {
-		return existing as? UIButton ?? defaultButton
-	}
-	
-	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
-		guard let button = view as? UIButton else { return }
-		
-		button.removeTarget(nil, action: nil, for: .allEvents)
-		props.forEach { $0.apply(to: button, registerEventHandler: registerEventHandler) }
-	}
-	
-	func toElement() -> Element<Msg> {
-		return Element(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
-	}
-}
-
-public func button<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ButtonProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
-	return ButtonElement(key: key.rawValue, props: props).toElement()
-}
-
-
 public enum LabelProps<Msg> : ViewProps {
 	typealias View = UILabel
 	
 	case text(String)
 	case textAlignment(NSTextAlignment)
-	case keyPathApplier(KeyPathApplier<UILabel>)
+	case applyChange(ChangeApplier<UILabel>)
 	
 	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<UILabel, Value>, to value: Value) -> LabelProps {
-		return .keyPathApplier(KeyPathApplier(keyPath, value: value))
+		return .applyChange(ChangeApplier(keyPath, value: value))
 	}
 	
 	fileprivate func apply(to label: UILabel, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
@@ -109,7 +64,7 @@ public enum LabelProps<Msg> : ViewProps {
 			label.text = text
 		case let .textAlignment(alignment):
 			label.textAlignment = alignment
-		case let .keyPathApplier(applier):
+		case let .applyChange(applier):
 			applier.apply(to: label)
 		}
 	}
@@ -153,11 +108,11 @@ public enum FieldProps<Msg> : ViewProps {
 	case placeholder(String?)
 	case keyboardType(UIKeyboardType)
 	case returnKeyType(UIReturnKeyType)
-	case keyPathApplier(KeyPathApplier<UITextField>)
+	case applyChange(ChangeApplier<UITextField>)
 	case on(UIControlEvents, toMessage: ((UITextField, UIEvent) -> Msg)?)
 	
 	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<UITextField, Value>, to value: Value) -> FieldProps {
-		return .keyPathApplier(KeyPathApplier(keyPath, value: value))
+		return .applyChange(ChangeApplier(keyPath, value: value))
 	}
 	
 	fileprivate func apply(to field: UITextField, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
@@ -172,7 +127,7 @@ public enum FieldProps<Msg> : ViewProps {
 			field.keyboardType = keyboardType
 		case let .returnKeyType(returnKeyType):
 			field.returnKeyType = returnKeyType
-		case let .keyPathApplier(applier):
+		case let .applyChange(applier):
 			applier.apply(to: field)
 		case let .on(controlEvents, toMessage):
 			let key = String(describing: controlEvents)
@@ -213,12 +168,14 @@ public func field<Key: RawRepresentable, Msg>(_ key: Key, _ props: [FieldProps<M
 }
 
 
-public enum ControlProps<Msg, Control: UIControl> {
+public enum ControlProps<Msg, Control: UIControl> : ViewProps {
+	typealias View = Control
+	
 	case on(UIControlEvents, toMessage: (Control, UIEvent) -> Msg)
-	case keyPathApplier(KeyPathApplier<Control>)
+	case applyChange(ChangeApplier<Control>)
 	
 	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<Control, Value>, to value: Value) -> ControlProps {
-		return .keyPathApplier(KeyPathApplier(keyPath, value: value))
+		return .applyChange(ChangeApplier(keyPath, value: value))
 	}
 	
 	fileprivate func apply(to control: Control, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
@@ -227,7 +184,7 @@ public enum ControlProps<Msg, Control: UIControl> {
 			let key = String(describing: controlEvents)
 			let (target, action) = registerEventHandler(key, MessageMaker(control: toMessage), EventHandlingOptions())
 			control.addTarget(target, action: action, for: controlEvents)
-		case let .keyPathApplier(applier):
+		case let .applyChange(applier):
 			applier.apply(to: control)
 		}
 	}
@@ -264,6 +221,21 @@ public func control<Key: RawRepresentable, Msg, Control: UIControl>(makeDefault:
 	return { key, props in
 		return ControlElement(key: key.rawValue, props: props, _makeDefaultControl: makeDefault).toElement()
 	}
+}
+
+
+extension ControlProps where Control : UIButton {
+	public static func title(_ title: String, for controlState: UIControlState) -> ControlProps {
+		return .applyChange(ChangeApplier(makeChanges: { $0.setTitle(title, for: controlState) }))
+	}
+	
+	public static func onPress(_ makeMessage: @escaping () -> Msg) -> ControlProps {
+		return .on(.touchUpInside) { (button: UIButton, event: UIEvent) in return makeMessage() }
+	}
+}
+
+public func button<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProps<Msg, UIButton>]) -> Element<Msg> where Key.RawValue == String {
+	return control(makeDefault: { UIButton() })(key, props)
 }
 
 

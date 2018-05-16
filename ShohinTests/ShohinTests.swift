@@ -17,7 +17,7 @@ struct CounterModel {
 
 enum CounterMsg {
 	case increment()
-	case decrement()
+	case decrement
 	case randomize()
 	case setCounter(to: Int)
 	case setMultiplier(to: String)
@@ -30,7 +30,7 @@ func update(message: CounterMsg, change: inout Change<CounterModel, CounterMsg>)
 	switch message {
 	case .increment():
 		change.model.counter += 1
-	case .decrement():
+	case .decrement:
 		change.model.counter -= 1
 	case .randomize():
 		change.send(intGenerator.generate(min: 0, max: 10))
@@ -63,18 +63,18 @@ func render(model: CounterModel) -> [Element<CounterMsg>] {
 		button(CounterKey.increment, [
 			.tag(3),
 			.title("Increment", for: .normal),
-			.onPress { _ in CounterMsg.increment() },
+			.onPress(CounterMsg.increment),
 			]),
 		button(CounterKey.decrement, [
 			.tag(4),
 			.title("Decrement", for: .normal),
-			.onPress { _ in CounterMsg.decrement() },
+			.onPress{ CounterMsg.decrement },
 			.set(\.tintColor, to: UIColor.red),
 			]),
 		button(CounterKey.randomize, [
 			.tag(5),
 			.title("Randomize", for: .normal),
-			.onPress { _ in CounterMsg.randomize() },
+			.onPress(CounterMsg.randomize),
 			])
 	]
 }
@@ -143,7 +143,7 @@ class ShohinTests: XCTestCase {
 		self.program.store.receive(message: .increment())
 		XCTAssertEqual(counterView.text, "2")
 		
-		self.program.store.receive(message: .decrement())
+		self.program.store.receive(message: .decrement)
 		XCTAssertEqual(counterView.text, "1")
 	}
 	
@@ -167,7 +167,7 @@ class ShohinTests: XCTestCase {
 		self.measure {
 			for _ in 0...200 {
 				self.program.store.receive(message: .increment())
-				self.program.store.receive(message: .decrement())
+				self.program.store.receive(message: .decrement)
 			}
 		}
 	}
