@@ -17,7 +17,8 @@ class ViewController: UIViewController {
 		super.viewDidLoad()
 		
 		let view = self.view!
-		view.backgroundColor = UIColor.red
+//		view.backgroundColor = UIColor.red
+		view.tintColor = UIColor.red
 		
 		self.program = Program(view: view, model: CounterModel(), initialCommand: [], update: updateCounter, render: renderCounter, layout: layoutCounter)
 	}

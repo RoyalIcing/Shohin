@@ -234,8 +234,8 @@ extension ControlProps where Control : UIButton {
 	}
 }
 
-public func button<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProps<Msg, UIButton>]) -> Element<Msg> where Key.RawValue == String {
-	return control(makeDefault: { UIButton() })(key, props)
+public func button<Key: RawRepresentable, Msg>(_ key: Key, type: UIButtonType = .system, _ props: [ControlProps<Msg, UIButton>]) -> Element<Msg> where Key.RawValue == String {
+	return control(makeDefault: { UIButton(type: type) })(key, props)
 }
 
 
@@ -282,4 +282,168 @@ extension ControlProps where Control : UIStepper {
 
 public func stepper<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProps<Msg, UIStepper>]) -> Element<Msg> where Key.RawValue == String {
 	return control(makeDefault: { UIStepper() })(key, props)
+}
+
+
+public struct Segment {
+	public enum Content {
+		case title(String)
+		case image(UIImage)
+	}
+	
+	public var key: String
+	public var content: Content
+	public var enabled = true
+	public var width: CGFloat = 0
+	
+	func add(to segmentedControl: UISegmentedControl, index: Int) {
+		let maxIndex = segmentedControl.numberOfSegments
+		switch content {
+		case let .image(image):
+			if index >= maxIndex {
+				segmentedControl.insertSegment(with: image, at: index, animated: false)
+			}
+			else {
+				segmentedControl.setImage(image, forSegmentAt: index)
+			}
+		case let .title(title):
+			if index >= maxIndex {
+				segmentedControl.insertSegment(withTitle: title, at: index, animated: false)
+			}
+			else {
+				segmentedControl.setTitle(title, forSegmentAt: index)
+			}
+		}
+		segmentedControl.setEnabled(enabled, forSegmentAt: index)
+		segmentedControl.setWidth(width, forSegmentAt: index)
+	}
+}
+
+public func segment<Key: RawRepresentable>(_ key: Key, _ content: Segment.Content, enabled: Bool = true, width: CGFloat = 0.0) -> Segment where Key.RawValue : CustomStringConvertible {
+	return Segment(key: String(describing: key), content: content, enabled: enabled, width: width)
+}
+
+var segmentKeysAssociatedObjectKey = true
+
+extension UISegmentedControl {
+	public var selectedSegmentKey: String! {
+		guard let segmentKeys = objc_getAssociatedObject(self, &segmentKeysAssociatedObjectKey) as? [String]
+			else { return nil }
+	
+		let index = self.selectedSegmentIndex
+		if index >= self.numberOfSegments {
+			return nil
+		}
+		
+		return segmentKeys[index]
+	}
+}
+
+public enum SegmentedControlProps<Msg> : ViewProps {
+	typealias View = UISegmentedControl
+	
+	case selectedKey(String)
+	case segments([Segment])
+	case applyChange(ChangeApplier<UISegmentedControl>)
+	case on(UIControlEvents, toMessage: ((UISegmentedControl, UIEvent) -> Msg)?)
+	
+	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<UISegmentedControl, Value>, to value: Value) -> SegmentedControlProps {
+		return .applyChange(ChangeApplier(keyPath, value: value))
+	}
+	
+	struct CommitState {
+		var selectedIndex: Int = UISegmentedControlNoSegment
+		var segments: [Segment] = []
+		var otherProps: [SegmentedControlProps<Msg>] = []
+		
+		init(props: [SegmentedControlProps<Msg>]) {
+			var selectedKey: String? = nil
+			
+			for prop in props {
+				switch prop {
+				case let .selectedKey(key):
+					selectedKey = key
+				case let .segments(newSegments):
+					segments.append(contentsOf: newSegments)
+				default:
+					otherProps.append(prop)
+				}
+			}
+			
+			if let selectedKey = selectedKey {
+				for (index, segment) in segments.enumerated() {
+					if segment.key == selectedKey {
+						selectedIndex = index
+						break
+					}
+				}
+			}
+		}
+		
+		fileprivate func apply(to control: UISegmentedControl, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
+			for (index, segment) in segments.enumerated() {
+				segment.add(to: control, index: index)
+			}
+			
+			let currentCount = control.numberOfSegments
+			let countToRemove = max(0, currentCount - segments.count)
+			if countToRemove > 0 {
+				for index in (currentCount - countToRemove) ..< currentCount {
+					control.removeSegment(at: index, animated: false)
+				}
+			}
+			
+			control.selectedSegmentIndex = selectedIndex
+			
+			otherProps.forEach { $0.apply(to: control, registerEventHandler: registerEventHandler) }
+			
+			let segmentKeys = segments.map{ $0.key }
+			objc_setAssociatedObject(control, &segmentKeysAssociatedObjectKey, segmentKeys, .OBJC_ASSOCIATION_COPY_NONATOMIC)
+		}
+	}
+	
+	fileprivate func apply(to segmentedControl: UISegmentedControl, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
+		switch self {
+		case let .applyChange(applier):
+			applier.apply(to: segmentedControl)
+		case let .on(controlEvents, toMessage):
+			let key = String(describing: controlEvents)
+			let (target, action) = registerEventHandler(key, toMessage.map { MessageMaker(control: $0) } ?? MessageMaker(), EventHandlingOptions())
+			segmentedControl.addTarget(target, action: action, for: controlEvents)
+		default:
+			break
+		}
+	}
+}
+
+struct SegmentedControlElement<Msg> {
+	let key: String
+	let props: [SegmentedControlProps<Msg>]
+	
+	private func makeDefault() -> UISegmentedControl {
+		let control = UISegmentedControl()
+		control.translatesAutoresizingMaskIntoConstraints = false
+		return control
+	}
+	
+	func prepare(existing: UIView?) -> UIView {
+		return existing as? UISegmentedControl ?? makeDefault()
+	}
+	
+	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
+		guard let control = view as? UISegmentedControl else { return }
+		
+		control.removeTarget(nil, action: nil, for: .allEvents)
+		
+		let state = SegmentedControlProps.CommitState(props: props)
+		state.apply(to: control, registerEventHandler: registerEventHandler)
+	}
+	
+	func toElement() -> Element<Msg> {
+		return Element(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
+	}
+}
+
+public func segmentedControl<Key: RawRepresentable, Msg>(_ key: Key, _ props: [SegmentedControlProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
+	return SegmentedControlElement(key: key.rawValue, props: props).toElement()
 }

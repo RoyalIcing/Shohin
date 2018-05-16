@@ -10,9 +10,21 @@ import Foundation
 import Shohin
 
 
+enum Mascot : String {
+	case cat
+	case dog
+	case fox
+	case wolf
+	
+	static var allCases: [Mascot] {
+		return [.cat, .dog, .fox, .wolf]
+	}
+}
+
 struct CounterModel {
-	var counter: Int = 0
+	var counter: Int = 5
 	var maximumValue: Int = 10
+	var mascot: Mascot = .cat
 }
 
 enum CounterMsg {
@@ -21,6 +33,7 @@ enum CounterMsg {
 	case randomize()
 	case setCounter(to: Int)
 	case setMaximumValue(to: Int)
+	case setMascot(to: Mascot)
 	case reset()
 }
 
@@ -38,6 +51,8 @@ func updateCounter(message: CounterMsg, change: inout Change<CounterModel, Count
 		change.model.counter = newValue
 	case let .setMaximumValue(newValue):
 		change.model.maximumValue = newValue
+	case let .setMascot(newMascot):
+		change.model.mascot = newMascot
 	case .reset():
 		change.model.counter = 0
 	}
@@ -45,13 +60,42 @@ func updateCounter(message: CounterMsg, change: inout Change<CounterModel, Count
 
 enum CounterKey: String {
 	case counter, increment, decrement, randomize, counterField, counterSlider, maximumValueStepper
+	case mascotChoice, mascot
+}
+
+extension Mascot {
+	var label: String {
+		switch self {
+		case .cat:
+			return "Cat"
+		case .dog:
+			return "Dog"
+		case .fox:
+			return "Fox"
+		case .wolf:
+			return "Wolf"
+		}
+	}
+	
+	var emoji: String {
+		switch self {
+		case .cat:
+			return "🐱"
+		case .dog:
+			return "🐶"
+		case .fox:
+			return "🦊"
+		case .wolf:
+			return "🐺"
+		}
+	}
 }
 
 func renderCounter(model: CounterModel) -> [Element<CounterMsg>] {
 	return [
 		label(CounterKey.counter, [
 			.tag(1),
-			.text("\(model.counter)"),
+			.text("Counter:"),
 			.textAlignment(.center),
 			]),
 		field(CounterKey.counterField, [
@@ -72,14 +116,33 @@ func renderCounter(model: CounterModel) -> [Element<CounterMsg>] {
 			}
 			]),
 		slider(CounterKey.counterSlider, [
-			.value(Float(model.counter)),
 			.minimumValue(0),
 			.maximumValue(Float(model.maximumValue)),
+			.value(Float(model.counter)),
 			.isContinuous,
 			.on(.valueChanged) { slider, event in
 				let value = Int(slider.value)
 				return CounterMsg.setCounter(to: value)
 			}
+			]),
+		segmentedControl(CounterKey.mascotChoice, [
+			.selectedKey(model.mascot.rawValue),
+			.segments(
+				Mascot.allCases.prefix(upTo: min(model.counter, Mascot.allCases.endIndex)).map { mascot in
+					return segment(
+						mascot,
+						Segment.Content.title(mascot.label),
+						enabled: true,
+						width: 0.0
+					)
+			}),
+			.on(.valueChanged) { control, event in
+				let mascot = Mascot(rawValue: control.selectedSegmentKey)!
+				return CounterMsg.setMascot(to: mascot)
+			}
+			]),
+		label(CounterKey.mascot, [
+			.text(model.mascot.emoji)
 			]),
 		button(CounterKey.increment, [
 			.tag(3),
@@ -106,6 +169,8 @@ func layoutCounter(model: CounterModel, context: LayoutContext) -> [NSLayoutCons
 	let counterField = context.view(CounterKey.counterField)!
 	let counterSlider = context.view(CounterKey.counterSlider)!
 	let maximumValueStepper = context.view(CounterKey.maximumValueStepper)!
+	let mascotChoice = context.view(CounterKey.mascotChoice)!
+	let mascot = context.view(CounterKey.mascot)!
 	let decrementButton = context.view(CounterKey.decrement)!
 	let incrementButton = context.view(CounterKey.increment)!
 	let randomizeButton = context.view(CounterKey.randomize)!
@@ -119,6 +184,11 @@ func layoutCounter(model: CounterModel, context: LayoutContext) -> [NSLayoutCons
 		counterSlider.leadingAnchor.constraint(equalTo: maximumValueStepper.trailingAnchor, constant: 20.0),
 		counterSlider.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
 		counterSlider.topAnchor.constraint(equalTo: counterField.bottomAnchor),
+		mascotChoice.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
+		mascotChoice.topAnchor.constraintGreaterThanOrEqualToSystemSpacingBelow(counterSlider.bottomAnchor, multiplier: 1.0),
+		mascot.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
+		mascot.topAnchor.constraintGreaterThanOrEqualToSystemSpacingBelow(mascotChoice.bottomAnchor, multiplier: 1.0),
+		mascot.bottomAnchor.constraint(lessThanOrEqualTo: incrementButton.topAnchor, constant: -20.0),
 		decrementButton.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
 		decrementButton.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
 		incrementButton.trailingAnchor.constraint(equalTo: margins.trailingAnchor),

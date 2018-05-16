@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		B25C5C5020AC2B050083C33D /* Generators.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25C5C4F20AC2B050083C33D /* Generators.swift */; };
+		B25C5C5220AC71E90083C33D /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25C5C5120AC71E90083C33D /* Helpers.swift */; };
 		B2B5C7E420AB04E500942421 /* Elements.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2B5C7E320AB04E500942421 /* Elements.swift */; };
 		B2F43E2B20A9B0B7007A3744 /* Shohin.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B2F43E2120A9B0B7007A3744 /* Shohin.framework */; };
 		B2F43E3020A9B0B7007A3744 /* ShohinTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2F43E2F20A9B0B7007A3744 /* ShohinTests.swift */; };
@@ -28,6 +29,7 @@
 
 /* Begin PBXFileReference section */
 		B25C5C4F20AC2B050083C33D /* Generators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Generators.swift; sourceTree = "<group>"; };
+		B25C5C5120AC71E90083C33D /* Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helpers.swift; sourceTree = "<group>"; };
 		B2B5C7E320AB04E500942421 /* Elements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elements.swift; sourceTree = "<group>"; };
 		B2F43E2120A9B0B7007A3744 /* Shohin.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Shohin.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B2F43E2420A9B0B7007A3744 /* Shohin.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Shohin.h; sourceTree = "<group>"; };
@@ -93,6 +95,7 @@
 			isa = PBXGroup;
 			children = (
 				B2F43E2F20A9B0B7007A3744 /* ShohinTests.swift */,
+				B25C5C5120AC71E90083C33D /* Helpers.swift */,
 				B2F43E3120A9B0B7007A3744 /* Info.plist */,
 			);
 			path = ShohinTests;
@@ -219,6 +222,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B2F43E3020A9B0B7007A3744 /* ShohinTests.swift in Sources */,
+				B25C5C5220AC71E90083C33D /* Helpers.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
