@@ -63,18 +63,18 @@ func view(model: CounterModel) -> [Element<CounterMsg>] {
 		button(CounterKey.increment, [
 			.tag(3),
 			.title("Increment", for: .normal),
-			.onTouchUpInside { _ in CounterMsg.increment() },
+			.onPress { _ in CounterMsg.increment() },
 			]),
 		button(CounterKey.decrement, [
 			.tag(4),
 			.title("Decrement", for: .normal),
-			.onTouchUpInside({ _ in CounterMsg.decrement() }),
+			.onPress { _ in CounterMsg.decrement() },
 			.set(\.tintColor, to: UIColor.red),
 			]),
 		button(CounterKey.randomize, [
 			.tag(5),
 			.title("Randomize", for: .normal),
-			.onTouchUpInside({ _ in CounterMsg.randomize() }),
+			.onPress { _ in CounterMsg.randomize() },
 			])
 	]
 }

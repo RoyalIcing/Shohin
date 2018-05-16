@@ -157,21 +157,6 @@ class EventHandlerSet<Msg> {
 }
 
 
-public class KeyPathApplier<Root> {
-	private var applier: (Root) -> ()
-	
-	public init<Value>(_ keyPath: ReferenceWritableKeyPath<Root, Value>, value: Value) {
-		self.applier = { root in
-			root[keyPath: keyPath] = value
-		}
-	}
-	
-	public func apply(to root: Root) {
-		applier(root)
-	}
-}
-
-
 class ViewReconciler<Msg> {
 	let view: UIView
 	var send: (Msg) -> () = { _ in }

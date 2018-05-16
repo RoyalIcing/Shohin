@@ -9,6 +9,21 @@
 import UIKit
 
 
+public class KeyPathApplier<Root> {
+	private var applier: (Root) -> ()
+	
+	public init<Value>(_ keyPath: ReferenceWritableKeyPath<Root, Value>, value: Value) {
+		self.applier = { root in
+			root[keyPath: keyPath] = value
+		}
+	}
+	
+	public func apply(to root: Root) {
+		applier(root)
+	}
+}
+
+
 protocol ViewProps {
 	associatedtype View : UIView
 	
@@ -25,7 +40,7 @@ extension ViewProps {
 public enum ButtonProps<Msg> : ViewProps {
 	typealias View = UIButton
 	
-	case onTouchUpInside((UIEvent) -> Msg)
+	case onPress((UIEvent) -> Msg)
 	case title(String?, for: UIControlState)
 	case keyPathApplier(KeyPathApplier<UIButton>)
 	
@@ -35,7 +50,7 @@ public enum ButtonProps<Msg> : ViewProps {
 	
 	fileprivate func apply(to button: UIButton, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
 		switch self {
-		case let .onTouchUpInside(makeMessage):
+		case let .onPress(makeMessage):
 			let (target, action) = registerEventHandler("touchUpInside", MessageMaker(event: makeMessage), EventHandlingOptions())
 			button.addTarget(target, action: action, for: UIControlEvents.touchUpInside)
 		case let .title(title, for: state):
