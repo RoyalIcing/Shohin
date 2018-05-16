@@ -194,19 +194,20 @@ public enum ControlProp<Msg, Control: UIControl> : ViewProp {
 	}
 }
 
-struct ControlElement<Msg, Control: UIControl> {
-	let key: String
-	let props: [ControlProp<Msg, Control>]
-	var _makeDefaultControl: () -> Control
-	
-	func makeDefault() -> Control {
-		let control = _makeDefaultControl()
+enum ControlDefaults<Control: UIControl> {
+	static func makeDefault() -> Control {
+		let control = Control()
 		control.translatesAutoresizingMaskIntoConstraints = false
 		return control
 	}
+}
+
+struct ControlElement<Msg, Control: UIControl> {
+	let key: String
+	let props: [ControlProp<Msg, Control>]
 	
 	func prepare(existing: UIView?) -> UIView {
-		return existing as? Control ?? makeDefault()
+		return existing as? Control ?? ControlDefaults.makeDefault()
 	}
 	
 	var prioritisedProps: [(Int, ControlProp<Msg, Control>)] {
@@ -242,10 +243,8 @@ struct ControlElement<Msg, Control: UIControl> {
 	}
 }
 
-public func control<Key: RawRepresentable, Msg, Control: UIControl>(makeDefault: @escaping () -> Control) -> (_ key: Key, _ props: [ControlProp<Msg, Control>]) -> Element<Msg> where Key.RawValue == String {
-	return { key, props in
-		return ControlElement(key: key.rawValue, props: props, _makeDefaultControl: makeDefault).toElement()
-	}
+public func control<Key: RawRepresentable, Msg, Control: UIControl>(_ key: Key, _ props: [ControlProp<Msg, Control>]) -> Element<Msg> where Key.RawValue == String {
+	return ControlElement(key: key.rawValue, props: props).toElement()
 }
 
 
@@ -259,8 +258,16 @@ extension ControlProp where Control : UIButton {
 	}
 }
 
-public func button<Key: RawRepresentable, Msg>(_ key: Key, type: UIButtonType = .system, _ props: [ControlProp<Msg, UIButton>]) -> Element<Msg> where Key.RawValue == String {
-	return control(makeDefault: { UIButton(type: type) })(key, props)
+extension ControlDefaults where Control == UIButton {
+	static func makeDefault() -> Control {
+		let button = UIButton(type: .system)
+		button.translatesAutoresizingMaskIntoConstraints = false
+		return button
+	}
+}
+
+public func button<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProp<Msg, UIButton>]) -> Element<Msg> where Key.RawValue == String {
+	return control(key, props)
 }
 
 
@@ -283,7 +290,7 @@ extension ControlProp where Control : UISlider {
 }
 
 public func slider<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProp<Msg, UISlider>]) -> Element<Msg> where Key.RawValue == String {
-	return control(makeDefault: { UISlider() })(key, props)
+	return control(key, props)
 }
 
 
@@ -306,7 +313,7 @@ extension ControlProp where Control : UIStepper {
 }
 
 public func stepper<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProp<Msg, UIStepper>]) -> Element<Msg> where Key.RawValue == String {
-	return control(makeDefault: { UIStepper() })(key, props)
+	return control(key, props)
 }
 
 

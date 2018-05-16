@@ -33,7 +33,7 @@ class ControlTests: XCTestCase {
 			.set(\.value, to: 30, stage: 3),
 			.set(\.value, to: 10, stage: 1),
 			.set(\.maximumValue, to: 100, stage: 0)
-			], _makeDefaultControl: { return UISlider() })
+			])
 		
 		let prioritisedProps = controlElement.prioritisedProps
 		let indexes = prioritisedProps.map { $0.0 }
