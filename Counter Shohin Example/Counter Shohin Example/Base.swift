@@ -84,18 +84,18 @@ func renderCounter(model: CounterModel) -> [Element<CounterMsg>] {
 		button(CounterKey.increment, [
 			.tag(3),
 			.title("Increment", for: .normal),
-			.onPress { _ in CounterMsg.increment() },
+			.onPress(CounterMsg.increment),
 			]),
 		button(CounterKey.decrement, [
 			.tag(4),
 			.title("Decrement", for: .normal),
-			.onPress { _ in CounterMsg.decrement() },
+			.onPress(CounterMsg.decrement),
 			.set(\.tintColor, to: UIColor.red),
 			]),
 		button(CounterKey.randomize, [
 			.tag(5),
 			.title("Randomize", for: .normal),
-			.onPress { _ in CounterMsg.randomize() },
+			.onPress(CounterMsg.randomize),
 			]),
 	]
 }
