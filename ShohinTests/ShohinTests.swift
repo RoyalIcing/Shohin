@@ -118,9 +118,9 @@ func renderCounter(model: CounterModel) -> [Element<CounterMsg>] {
 			]),
 		slider(CounterKey.counterSlider, [
 			.tag(4),
+			.value(Float(model.counter)),
 			.minimumValue(0),
 			.maximumValue(Float(model.maximumValue)),
-			.value(Float(model.counter)),
 			.isContinuous,
 			.on(.valueChanged) { slider, event in
 				let value = Int(slider.value)
@@ -217,6 +217,10 @@ class ShohinTests: XCTestCase {
 		return self.mainView.viewWithTag(2) as! UITextField
 	}
 	
+	var counterSlider: UISlider {
+		return self.mainView.viewWithTag(4) as! UISlider
+	}
+	
 	var incrementButton: UIButton {
 		return self.mainView.viewWithTag(7) as! UIButton
 	}
@@ -244,6 +248,10 @@ class ShohinTests: XCTestCase {
 	
 	func testInitialRender() {
 		XCTAssertEqual(counterView.text, "5")
+	}
+	
+	func testPrioritisesControlProps() {
+		XCTAssertEqual(counterSlider.value, 5)
 	}
 	
 	func testProgramReceive() {

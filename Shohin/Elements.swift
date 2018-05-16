@@ -172,10 +172,14 @@ public enum ControlProps<Msg, Control: UIControl> : ViewProps {
 	typealias View = Control
 	
 	case on(UIControlEvents, toMessage: (Control, UIEvent) -> Msg)
-	case applyChange(ChangeApplier<Control>)
+	case applyChange(ChangeApplier<Control>, stage: Int)
+	
+	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<Control, Value>, to value: Value, stage: Int) -> ControlProps {
+		return .applyChange(ChangeApplier(keyPath, value: value), stage: stage)
+	}
 	
 	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<Control, Value>, to value: Value) -> ControlProps {
-		return .applyChange(ChangeApplier(keyPath, value: value))
+		return .applyChange(ChangeApplier(keyPath, value: value), stage: 0)
 	}
 	
 	fileprivate func apply(to control: Control, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
@@ -184,16 +188,16 @@ public enum ControlProps<Msg, Control: UIControl> : ViewProps {
 			let key = String(describing: controlEvents)
 			let (target, action) = registerEventHandler(key, MessageMaker(control: toMessage), EventHandlingOptions())
 			control.addTarget(target, action: action, for: controlEvents)
-		case let .applyChange(applier):
+		case let .applyChange(applier, _):
 			applier.apply(to: control)
 		}
 	}
 }
 
-fileprivate struct ControlElement<Msg, Control: UIControl> {
+struct ControlElement<Msg, Control: UIControl> {
 	let key: String
 	let props: [ControlProps<Msg, Control>]
-	fileprivate var _makeDefaultControl: () -> Control
+	var _makeDefaultControl: () -> Control
 	
 	func makeDefault() -> Control {
 		let control = _makeDefaultControl()
@@ -205,11 +209,32 @@ fileprivate struct ControlElement<Msg, Control: UIControl> {
 		return existing as? Control ?? makeDefault()
 	}
 	
-	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
+	var prioritisedProps: [(Int, ControlProps<Msg, Control>)] {
+		return props.enumerated().sorted(by: { (a, b) -> Bool in
+			let (indexA, propA) = a
+			let (indexB, propB) = b
+			switch (propA, propB) {
+			case let (.applyChange(_, stageA), .applyChange(_, stageB)):
+				if (stageA == stageB) {
+					return indexA < indexB
+				}
+				else {
+					return stageA < stageB
+				}
+			default:
+				return indexA < indexB
+			}
+		})
+	}
+	
+	func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
 		guard let control = view as? Control else { return }
 		
 		control.removeTarget(nil, action: nil, for: .allEvents)
-		props.forEach { $0.apply(to: control, registerEventHandler: registerEventHandler) }
+		
+		for (_, prop) in prioritisedProps {
+			prop.apply(to: control, registerEventHandler: registerEventHandler)
+		}
 	}
 	
 	func toElement() -> Element<Msg> {
@@ -226,7 +251,7 @@ public func control<Key: RawRepresentable, Msg, Control: UIControl>(makeDefault:
 
 extension ControlProps where Control : UIButton {
 	public static func title(_ title: String, for controlState: UIControlState) -> ControlProps {
-		return .applyChange(ChangeApplier(makeChanges: { $0.setTitle(title, for: controlState) }))
+		return .applyChange(ChangeApplier(makeChanges: { $0.setTitle(title, for: controlState) }), stage: 0)
 	}
 	
 	public static func onPress(_ makeMessage: @escaping () -> Msg) -> ControlProps {
@@ -241,7 +266,7 @@ public func button<Key: RawRepresentable, Msg>(_ key: Key, type: UIButtonType = 
 
 extension ControlProps where Control : UISlider {
 	public static func value(_ value: Float) -> ControlProps {
-		return .set(\.value, to: value)
+		return .set(\.value, to: value, stage: 10)
 	}
 	
 	public static func minimumValue(_ value: Float) -> ControlProps {
@@ -264,7 +289,7 @@ public func slider<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProp
 
 extension ControlProps where Control : UIStepper {
 	public static func value(_ value: Double) -> ControlProps {
-		return .set(\.value, to: value)
+		return .set(\.value, to: value, stage: 10)
 	}
 	
 	public static func minimumValue(_ value: Double) -> ControlProps {
