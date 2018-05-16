@@ -48,14 +48,14 @@ func update(message: CounterMsg, u: inout Change<CounterModel, CounterMsg>) {
 
 Let's make a UI so people can view the model, and make changes to update it. Here we are making labels, fields, and buttons.
 
-We identify each element that the user interacts with using a key enum.
+We identify each element that the user interacts with using the `CounterKey` string enum.
 
 ~~~swift
 enum CounterKey: String {
 	case counter, increment, decrement, randomize, counterField
 }
 
-func view(model: CounterModel) -> [Element<CounterMsg>] {
+func render(model: CounterModel) -> [Element<CounterMsg>] {
 	return [
 		label(CounterKey.counter, [
 			.tag(1),
@@ -115,7 +115,7 @@ Now let's get everything connected and running.
 let mainView = UIView(frame: CGRect(x: 0, y: 0, width: 500, height: 500))
 mainView.backgroundColor = #colorLiteral(red: 0.239215686917305, green: 0.674509823322296, blue: 0.968627452850342, alpha: 1.0)
 		
-let program = Program(view: mainView, model: CounterModel(), initialCommand: [], update: update, render: view, layout: layout)
+let program = Program(view: mainView, model: CounterModel(), initialCommand: [], update: update, render: render, layout: layout)
 ~~~
 
 That's it! You have a model, which is presented as a view. Interactions produce messages which then update the model. This causes the view to be refreshed.

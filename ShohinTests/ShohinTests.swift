@@ -48,7 +48,7 @@ enum CounterKey: String {
 	case counter, increment, decrement, randomize, counterField, multiplierField
 }
 
-func view(model: CounterModel) -> [Element<CounterMsg>] {
+func render(model: CounterModel) -> [Element<CounterMsg>] {
 	return [
 		label(CounterKey.counter, [
 			.tag(1),
@@ -126,7 +126,7 @@ class ShohinTests: XCTestCase {
 		mainView.backgroundColor = #colorLiteral(red: 0.239215686917305, green: 0.674509823322296, blue: 0.968627452850342, alpha: 1.0)
 		self.mainView = mainView
 		
-		self.program = Program(view: mainView, model: CounterModel(), initialCommand: [], update: update, render: view, layout: layout)
+		self.program = Program(view: mainView, model: CounterModel(), initialCommand: [], update: update, render: render, layout: layout)
 	}
 	
 	override func tearDown() {

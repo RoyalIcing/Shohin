@@ -19,7 +19,7 @@ class ViewController: UIViewController {
 		let view = self.view!
 		view.backgroundColor = UIColor.red
 		
-		self.program = Program(view: view, model: CounterModel(), initialCommand: [], update: updateCounter, render: viewCounter, layout: layoutCounter)
+		self.program = Program(view: view, model: CounterModel(), initialCommand: [], update: updateCounter, render: renderCounter, layout: layoutCounter)
 	}
 
 	override func didReceiveMemoryWarning() {
