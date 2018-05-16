@@ -87,15 +87,15 @@ func render(model: CounterModel) -> [Element<CounterMsg>] {
 }
 ~~~
 
-We can use AutoLayout too, making constraints between each UI element.
+We can use AutoLayout too, making constraints between each UI element, and to the superview’s margins guide.
 
 ~~~swift
-func layout(model: CounterModel, superview: UIView, viewForKey: (String) -> UIView?) -> [NSLayoutConstraint] {
-	let margins = superview.layoutMarginsGuide
-	let counterView = viewForKey(CounterKey.counter.rawValue)
-	let decrementButton = viewForKey(CounterKey.decrement.rawValue)
-	let incrementButton = viewForKey(CounterKey.increment.rawValue)
-	let randomizeButton = viewForKey(CounterKey.randomize.rawValue)
+func layout(model: CounterModel, context: LayoutContext) -> [NSLayoutConstraint] {
+	let margins = context.marginsGuide
+	let counterView = context.view(CounterKey.counter)
+	let decrementButton = context.view(CounterKey.decrement)
+	let incrementButton = context.view(CounterKey.increment)
+	let randomizeButton = context.view(CounterKey.randomize)
 	return [
 		counterView?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
 		counterView?.topAnchor.constraint(equalTo: margins.topAnchor),
@@ -105,7 +105,7 @@ func layout(model: CounterModel, superview: UIView, viewForKey: (String) -> UIVi
 		incrementButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
 		randomizeButton?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
 		randomizeButton?.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
-	].compactMap{ $0 }
+		].compactMap{ $0 }
 }
 ~~~
 

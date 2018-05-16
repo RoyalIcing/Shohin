@@ -157,6 +157,29 @@ class EventHandlerSet<Msg> {
 }
 
 
+public class LayoutContext {
+	private let _view: UIView
+	private let _viewForKey: (String) -> UIView?
+	
+	init(view: UIView, viewForKey: @escaping (String) -> UIView?) {
+		self._view = view
+		self._viewForKey = viewForKey
+	}
+	
+	public var marginsGuide: UILayoutGuide {
+		return _view.layoutMarginsGuide
+	}
+	
+	public var safeAreaGuide: UILayoutGuide {
+		return _view.safeAreaLayoutGuide
+	}
+	
+	public func view<Key: RawRepresentable>(_ key: Key) -> UIView? where Key.RawValue == String {
+		return _viewForKey(key.rawValue)
+	}
+}
+
+
 class ViewReconciler<Msg> {
 	let view: UIView
 	var send: (Msg) -> () = { _ in }
@@ -201,10 +224,10 @@ class ViewReconciler<Msg> {
 		return keyToSubview[key]
 	}
 
-	func usingModel<Model>(view: @escaping (Model) -> [Element<Msg>], layout: @escaping (_ model: Model, _ superview: UIView, _ viewForKey: (String) -> UIView?) -> [NSLayoutConstraint]) -> ((Model) -> ()) {
+	func usingModel<Model>(view: @escaping (Model) -> [Element<Msg>], layout: @escaping (_ model: Model, _ context: LayoutContext) -> [NSLayoutConstraint]) -> ((Model) -> ()) {
 		return { model in
 			self.update(view(model))
-			let constraints = layout(model, self.view, self.view(forKey:))
+			let constraints = layout(model, LayoutContext(view: self.view, viewForKey: self.view(forKey:)))
 			NSLayoutConstraint.activate(constraints)
 		}
 	}
@@ -244,7 +267,7 @@ public class Program<Model, Msg> {
 		initialCommand: Command<Msg> = [],
 		update: @escaping (Msg, inout Change<Model, Msg>) -> () = { _, _ in },
 		render: @escaping (Model) -> [Element<Msg>] = { _ in [] },
-		layout: @escaping (Model, UIView, (String) -> UIView?) -> [NSLayoutConstraint] = { _, _, _ in [] }
+		layout: @escaping (Model, LayoutContext) -> [NSLayoutConstraint] = { _, _ in [] }
 		) {
 		let reconciler = ViewReconciler<Msg>(view: view)
 		self.reconciler = reconciler

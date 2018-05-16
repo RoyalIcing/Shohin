@@ -79,12 +79,12 @@ func render(model: CounterModel) -> [Element<CounterMsg>] {
 	]
 }
 
-func layout(model: CounterModel, superview: UIView, viewForKey: (String) -> UIView?) -> [NSLayoutConstraint] {
-	let margins = superview.layoutMarginsGuide
-	let counterView = viewForKey(CounterKey.counter.rawValue)
-	let decrementButton = viewForKey(CounterKey.decrement.rawValue)
-	let incrementButton = viewForKey(CounterKey.increment.rawValue)
-	let randomizeButton = viewForKey(CounterKey.randomize.rawValue)
+func layout(model: CounterModel, context: LayoutContext) -> [NSLayoutConstraint] {
+	let margins = context.marginsGuide
+	let counterView = context.view(CounterKey.counter)
+	let decrementButton = context.view(CounterKey.decrement)
+	let incrementButton = context.view(CounterKey.increment)
+	let randomizeButton = context.view(CounterKey.randomize)
 	return [
 		counterView?.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
 		counterView?.topAnchor.constraint(equalTo: margins.topAnchor),

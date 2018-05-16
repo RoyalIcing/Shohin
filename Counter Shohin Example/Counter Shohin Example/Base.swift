@@ -100,15 +100,15 @@ func renderCounter(model: CounterModel) -> [Element<CounterMsg>] {
 	]
 }
 
-func layoutCounter(model: CounterModel, superview: UIView, viewForKey: (String) -> UIView?) -> [NSLayoutConstraint] {
-	let margins = superview.layoutMarginsGuide
-	let counterView = viewForKey(CounterKey.counter.rawValue)!
-	let counterField = viewForKey(CounterKey.counterField.rawValue)!
-	let counterSlider = viewForKey(CounterKey.counterSlider.rawValue)!
-	let maximumValueStepper = viewForKey(CounterKey.maximumValueStepper.rawValue)!
-	let decrementButton = viewForKey(CounterKey.decrement.rawValue)!
-	let incrementButton = viewForKey(CounterKey.increment.rawValue)!
-	let randomizeButton = viewForKey(CounterKey.randomize.rawValue)!
+func layoutCounter(model: CounterModel, context: LayoutContext) -> [NSLayoutConstraint] {
+	let margins = context.marginsGuide
+	let counterView = context.view(CounterKey.counter)!
+	let counterField = context.view(CounterKey.counterField)!
+	let counterSlider = context.view(CounterKey.counterSlider)!
+	let maximumValueStepper = context.view(CounterKey.maximumValueStepper)!
+	let decrementButton = context.view(CounterKey.decrement)!
+	let incrementButton = context.view(CounterKey.increment)!
+	let randomizeButton = context.view(CounterKey.randomize)!
 	return [
 		counterView.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
 		counterView.topAnchor.constraint(equalTo: margins.topAnchor),
