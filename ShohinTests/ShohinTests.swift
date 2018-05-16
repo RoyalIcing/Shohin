@@ -232,12 +232,6 @@ class ShohinTests: XCTestCase {
 		mainView.backgroundColor = #colorLiteral(red: 0.239215686917305, green: 0.674509823322296, blue: 0.968627452850342, alpha: 1.0)
 		self.mainView = mainView
 		
-		let app = UIApplication.shared
-		let screen = UIScreen.main
-		let window = UIWindow(frame: screen.bounds)
-		window.addSubview(mainView)
-		window.isHidden = false
-		
 		self.program = Program(view: mainView, model: CounterModel(), initialCommand: [], update: updateCounter, render: renderCounter, layout: layoutCounter)
 	}
 	
