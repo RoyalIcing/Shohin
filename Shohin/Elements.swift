@@ -34,27 +34,27 @@ extension ChangeApplier where Root : AnyObject {
 }
 
 
-protocol ViewProps {
+protocol ViewProp {
 	associatedtype View : UIView
 	
 	static func set<Value>(_ keyPath: ReferenceWritableKeyPath<View, Value>, to value: Value) -> Self
 }
 
-extension ViewProps {
+extension ViewProp {
 	public static func tag(_ tag: Int) -> Self {
 		return self.set(\.tag, to: tag)
 	}
 }
 
 
-public enum LabelProps<Msg> : ViewProps {
+public enum LabelProp<Msg> : ViewProp {
 	typealias View = UILabel
 	
 	case text(String)
 	case textAlignment(NSTextAlignment)
 	case applyChange(ChangeApplier<UILabel>)
 	
-	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<UILabel, Value>, to value: Value) -> LabelProps {
+	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<UILabel, Value>, to value: Value) -> LabelProp {
 		return .applyChange(ChangeApplier(keyPath, value: value))
 	}
 	
@@ -72,7 +72,7 @@ public enum LabelProps<Msg> : ViewProps {
 
 struct LabelElement<Msg> {
 	let key: String
-	let props: [LabelProps<Msg>]
+	let props: [LabelProp<Msg>]
 	
 	private var defaultLabel: UILabel {
 		let label = UILabel()
@@ -95,12 +95,12 @@ struct LabelElement<Msg> {
 	}
 }
 
-public func label<Key: RawRepresentable, Msg>(_ key: Key, _ props: [LabelProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
+public func label<Key: RawRepresentable, Msg>(_ key: Key, _ props: [LabelProp<Msg>]) -> Element<Msg> where Key.RawValue == String {
 	return LabelElement(key: key.rawValue, props: props).toElement()
 }
 
 
-public enum FieldProps<Msg> : ViewProps {
+public enum FieldProp<Msg> : ViewProp {
 	typealias View = UITextField
 	
 	case text(String)
@@ -111,7 +111,7 @@ public enum FieldProps<Msg> : ViewProps {
 	case applyChange(ChangeApplier<UITextField>)
 	case on(UIControlEvents, toMessage: ((UITextField, UIEvent) -> Msg)?)
 	
-	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<UITextField, Value>, to value: Value) -> FieldProps {
+	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<UITextField, Value>, to value: Value) -> FieldProp {
 		return .applyChange(ChangeApplier(keyPath, value: value))
 	}
 	
@@ -139,7 +139,7 @@ public enum FieldProps<Msg> : ViewProps {
 
 struct FieldElement<Msg> {
 	let key: String
-	let props: [FieldProps<Msg>]
+	let props: [FieldProp<Msg>]
 	
 	private func makeDefault() -> UITextField {
 		let field = UITextField()
@@ -163,22 +163,22 @@ struct FieldElement<Msg> {
 	}
 }
 
-public func field<Key: RawRepresentable, Msg>(_ key: Key, _ props: [FieldProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
+public func field<Key: RawRepresentable, Msg>(_ key: Key, _ props: [FieldProp<Msg>]) -> Element<Msg> where Key.RawValue == String {
 	return FieldElement(key: key.rawValue, props: props).toElement()
 }
 
 
-public enum ControlProps<Msg, Control: UIControl> : ViewProps {
+public enum ControlProp<Msg, Control: UIControl> : ViewProp {
 	typealias View = Control
 	
 	case on(UIControlEvents, toMessage: (Control, UIEvent) -> Msg)
 	case applyChange(ChangeApplier<Control>, stage: Int)
 	
-	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<Control, Value>, to value: Value, stage: Int) -> ControlProps {
+	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<Control, Value>, to value: Value, stage: Int) -> ControlProp {
 		return .applyChange(ChangeApplier(keyPath, value: value), stage: stage)
 	}
 	
-	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<Control, Value>, to value: Value) -> ControlProps {
+	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<Control, Value>, to value: Value) -> ControlProp {
 		return .applyChange(ChangeApplier(keyPath, value: value), stage: 0)
 	}
 	
@@ -196,7 +196,7 @@ public enum ControlProps<Msg, Control: UIControl> : ViewProps {
 
 struct ControlElement<Msg, Control: UIControl> {
 	let key: String
-	let props: [ControlProps<Msg, Control>]
+	let props: [ControlProp<Msg, Control>]
 	var _makeDefaultControl: () -> Control
 	
 	func makeDefault() -> Control {
@@ -209,7 +209,7 @@ struct ControlElement<Msg, Control: UIControl> {
 		return existing as? Control ?? makeDefault()
 	}
 	
-	var prioritisedProps: [(Int, ControlProps<Msg, Control>)] {
+	var prioritisedProps: [(Int, ControlProp<Msg, Control>)] {
 		return props.enumerated().sorted(by: { (a, b) -> Bool in
 			let (indexA, propA) = a
 			let (indexB, propB) = b
@@ -242,70 +242,70 @@ struct ControlElement<Msg, Control: UIControl> {
 	}
 }
 
-public func control<Key: RawRepresentable, Msg, Control: UIControl>(makeDefault: @escaping () -> Control) -> (_ key: Key, _ props: [ControlProps<Msg, Control>]) -> Element<Msg> where Key.RawValue == String {
+public func control<Key: RawRepresentable, Msg, Control: UIControl>(makeDefault: @escaping () -> Control) -> (_ key: Key, _ props: [ControlProp<Msg, Control>]) -> Element<Msg> where Key.RawValue == String {
 	return { key, props in
 		return ControlElement(key: key.rawValue, props: props, _makeDefaultControl: makeDefault).toElement()
 	}
 }
 
 
-extension ControlProps where Control : UIButton {
-	public static func title(_ title: String, for controlState: UIControlState) -> ControlProps {
+extension ControlProp where Control : UIButton {
+	public static func title(_ title: String, for controlState: UIControlState) -> ControlProp {
 		return .applyChange(ChangeApplier(makeChanges: { $0.setTitle(title, for: controlState) }), stage: 0)
 	}
 	
-	public static func onPress(_ makeMessage: @escaping () -> Msg) -> ControlProps {
+	public static func onPress(_ makeMessage: @escaping () -> Msg) -> ControlProp {
 		return .on(.touchUpInside) { (button: UIButton, event: UIEvent) in return makeMessage() }
 	}
 }
 
-public func button<Key: RawRepresentable, Msg>(_ key: Key, type: UIButtonType = .system, _ props: [ControlProps<Msg, UIButton>]) -> Element<Msg> where Key.RawValue == String {
+public func button<Key: RawRepresentable, Msg>(_ key: Key, type: UIButtonType = .system, _ props: [ControlProp<Msg, UIButton>]) -> Element<Msg> where Key.RawValue == String {
 	return control(makeDefault: { UIButton(type: type) })(key, props)
 }
 
 
-extension ControlProps where Control : UISlider {
-	public static func value(_ value: Float) -> ControlProps {
+extension ControlProp where Control : UISlider {
+	public static func value(_ value: Float) -> ControlProp {
 		return .set(\.value, to: value, stage: 10)
 	}
 	
-	public static func minimumValue(_ value: Float) -> ControlProps {
+	public static func minimumValue(_ value: Float) -> ControlProp {
 		return .set(\.minimumValue, to: value)
 	}
 	
-	public static func maximumValue(_ value: Float) -> ControlProps {
+	public static func maximumValue(_ value: Float) -> ControlProp {
 		return .set(\.maximumValue, to: value)
 	}
 	
-	public static var isContinuous: ControlProps {
+	public static var isContinuous: ControlProp {
 		return .set(\.isContinuous, to: true)
 	}
 }
 
-public func slider<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProps<Msg, UISlider>]) -> Element<Msg> where Key.RawValue == String {
+public func slider<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProp<Msg, UISlider>]) -> Element<Msg> where Key.RawValue == String {
 	return control(makeDefault: { UISlider() })(key, props)
 }
 
 
-extension ControlProps where Control : UIStepper {
-	public static func value(_ value: Double) -> ControlProps {
+extension ControlProp where Control : UIStepper {
+	public static func value(_ value: Double) -> ControlProp {
 		return .set(\.value, to: value, stage: 10)
 	}
 	
-	public static func minimumValue(_ value: Double) -> ControlProps {
+	public static func minimumValue(_ value: Double) -> ControlProp {
 		return .set(\.minimumValue, to: value)
 	}
 	
-	public static func maximumValue(_ value: Double) -> ControlProps {
+	public static func maximumValue(_ value: Double) -> ControlProp {
 		return .set(\.maximumValue, to: value)
 	}
 	
-	public static var isContinuous: ControlProps {
+	public static var isContinuous: ControlProp {
 		return .set(\.isContinuous, to: true)
 	}
 }
 
-public func stepper<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProps<Msg, UIStepper>]) -> Element<Msg> where Key.RawValue == String {
+public func stepper<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProp<Msg, UIStepper>]) -> Element<Msg> where Key.RawValue == String {
 	return control(makeDefault: { UIStepper() })(key, props)
 }
 
@@ -364,7 +364,7 @@ extension UISegmentedControl {
 	}
 }
 
-public enum SegmentedControlProps<Msg> : ViewProps {
+public enum SegmentedControlProp<Msg> : ViewProp {
 	typealias View = UISegmentedControl
 	
 	case selectedKey(String)
@@ -372,16 +372,16 @@ public enum SegmentedControlProps<Msg> : ViewProps {
 	case applyChange(ChangeApplier<UISegmentedControl>)
 	case on(UIControlEvents, toMessage: ((UISegmentedControl, UIEvent) -> Msg)?)
 	
-	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<UISegmentedControl, Value>, to value: Value) -> SegmentedControlProps {
+	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<UISegmentedControl, Value>, to value: Value) -> SegmentedControlProp {
 		return .applyChange(ChangeApplier(keyPath, value: value))
 	}
 	
 	struct CommitState {
 		var selectedIndex: Int = UISegmentedControlNoSegment
 		var segments: [Segment] = []
-		var otherProps: [SegmentedControlProps<Msg>] = []
+		var otherProps: [SegmentedControlProp<Msg>] = []
 		
-		init(props: [SegmentedControlProps<Msg>]) {
+		init(props: [SegmentedControlProp<Msg>]) {
 			var selectedKey: String? = nil
 			
 			for prop in props {
@@ -443,7 +443,7 @@ public enum SegmentedControlProps<Msg> : ViewProps {
 
 struct SegmentedControlElement<Msg> {
 	let key: String
-	let props: [SegmentedControlProps<Msg>]
+	let props: [SegmentedControlProp<Msg>]
 	
 	private func makeDefault() -> UISegmentedControl {
 		let control = UISegmentedControl()
@@ -460,7 +460,7 @@ struct SegmentedControlElement<Msg> {
 		
 		control.removeTarget(nil, action: nil, for: .allEvents)
 		
-		let state = SegmentedControlProps.CommitState(props: props)
+		let state = SegmentedControlProp.CommitState(props: props)
 		state.apply(to: control, registerEventHandler: registerEventHandler)
 	}
 	
@@ -469,6 +469,6 @@ struct SegmentedControlElement<Msg> {
 	}
 }
 
-public func segmentedControl<Key: RawRepresentable, Msg>(_ key: Key, _ props: [SegmentedControlProps<Msg>]) -> Element<Msg> where Key.RawValue == String {
+public func segmentedControl<Key: RawRepresentable, Msg>(_ key: Key, _ props: [SegmentedControlProp<Msg>]) -> Element<Msg> where Key.RawValue == String {
 	return SegmentedControlElement(key: key.rawValue, props: props).toElement()
 }
