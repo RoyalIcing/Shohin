@@ -34,7 +34,7 @@ extension ChangeApplier where Root : AnyObject {
 }
 
 
-protocol ViewProp {
+public protocol ViewProp {
 	associatedtype View : UIView
 	
 	static func set<Value>(_ keyPath: ReferenceWritableKeyPath<View, Value>, to value: Value) -> Self
@@ -48,7 +48,7 @@ extension ViewProp {
 
 
 public enum LabelProp<Msg> : ViewProp {
-	typealias View = UILabel
+	public typealias View = UILabel
 	
 	case text(String)
 	case textAlignment(NSTextAlignment)
@@ -101,7 +101,7 @@ public func label<Key: RawRepresentable, Msg>(_ key: Key, _ props: [LabelProp<Ms
 
 
 public enum FieldProp<Msg> : ViewProp {
-	typealias View = UITextField
+	public typealias View = UITextField
 	
 	case text(String)
 	case textAlignment(NSTextAlignment)
@@ -169,7 +169,7 @@ public func field<Key: RawRepresentable, Msg>(_ key: Key, _ props: [FieldProp<Ms
 
 
 public enum ControlProp<Msg, Control: UIControl> : ViewProp {
-	typealias View = Control
+	public typealias View = Control
 	
 	case on(UIControlEvents, toMessage: (Control, UIEvent) -> Msg)
 	case applyChange(ChangeApplier<Control>, stage: Int)
@@ -379,7 +379,7 @@ extension UISegmentedControl {
 }
 
 public enum SegmentedControlProp<Msg> : ViewProp {
-	typealias View = UISegmentedControl
+	public typealias View = UISegmentedControl
 	
 	case selectedKey(String)
 	case segments([Segment])
@@ -486,3 +486,54 @@ struct SegmentedControlElement<Msg> {
 public func segmentedControl<Key: RawRepresentable, Msg>(_ key: Key, _ props: [SegmentedControlProp<Msg>]) -> Element<Msg> where Key.RawValue == String {
 	return SegmentedControlElement(key: key.rawValue, props: props).toElement()
 }
+
+
+public enum CustomViewProp<Msg, CustomView: UIView> : ViewProp {
+	public typealias View = CustomView
+	
+	case backgroundColor(CGColor?)
+	case applyChange(ChangeApplier<CustomView>)
+	
+	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<View, Value>, to value: Value) -> CustomViewProp {
+		return .applyChange(ChangeApplier(keyPath, value: value))
+	}
+	
+	fileprivate func apply(to view: CustomView, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
+		switch self {
+		case let .backgroundColor(color):
+			view.layer.backgroundColor = color
+		case let .applyChange(applier):
+			applier.apply(to: view)
+		}
+	}
+}
+
+struct CustomViewElement<Msg, CustomView: UIView> {
+	let key: String
+	let props: [CustomViewProp<Msg, CustomView>]
+	
+	private var defaultView: CustomView {
+		let label = CustomView()
+		label.translatesAutoresizingMaskIntoConstraints = false
+		return label
+	}
+	
+	func prepare(existing: UIView?) -> UIView {
+		return existing as? CustomView ?? defaultView
+	}
+	
+	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
+		guard let customView = view as? CustomView else { return }
+		
+		props.forEach { $0.apply(to: customView, registerEventHandler: registerEventHandler) }
+	}
+	
+	func toElement() -> Element<Msg> {
+		return Element(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
+	}
+}
+
+public func customView<Key: RawRepresentable, Msg, CustomView: UIView>(_ key: Key, _ viewClass: CustomView.Type, _ props: [CustomViewProp<Msg, CustomView>]) -> Element<Msg> where Key.RawValue == String {
+	return CustomViewElement(key: key.rawValue, props: props).toElement()
+}
+

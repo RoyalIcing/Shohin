@@ -64,6 +64,7 @@ func updateCounter(message: CounterMsg, change: inout Change<CounterModel, Count
 enum CounterKey: String {
 	case counter, increment, decrement, randomize, counterField, counterSlider, maximumValueStepper
 	case mascotChoice, mascot
+	case colorView
 }
 
 extension Mascot {
@@ -123,10 +124,14 @@ func renderCounter(model: CounterModel) -> [Element<CounterMsg>] {
 			.maximumValue(Float(model.maximumValue)),
 			.value(Float(model.counter)),
 			.isContinuous,
+			.set(\.minimumTrackTintColor, to: Optional(UIColor(red: 0, green: 1, blue: 1, alpha: 1))),
 			.on(.valueChanged) { slider, event in
 				let value = Int(slider.value)
 				return CounterMsg.setCounter(to: value)
 			}
+			]),
+		customView(CounterKey.colorView, UIImageView.self, [
+			.backgroundColor(UIColor(hue: CGFloat(model.counter) / CGFloat(model.maximumValue), saturation: 1.0, brightness: 0.5, alpha: 1.0).cgColor)
 			]),
 		segmentedControl(CounterKey.mascotChoice, [
 			.selectedKey(model.mascot.rawValue),
@@ -172,6 +177,7 @@ func layoutCounter(model: CounterModel, context: LayoutContext) -> [NSLayoutCons
 	let counterField = context.view(CounterKey.counterField)!
 	let counterSlider = context.view(CounterKey.counterSlider)!
 	let maximumValueStepper = context.view(CounterKey.maximumValueStepper)!
+	let colorView = context.view(CounterKey.colorView)!
 	let mascotChoice = context.view(CounterKey.mascotChoice)!
 	let mascot = context.view(CounterKey.mascot)!
 	let decrementButton = context.view(CounterKey.decrement)!
@@ -187,11 +193,14 @@ func layoutCounter(model: CounterModel, context: LayoutContext) -> [NSLayoutCons
 		counterSlider.leadingAnchor.constraint(equalTo: maximumValueStepper.trailingAnchor, constant: 20.0),
 		counterSlider.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
 		counterSlider.topAnchor.constraint(equalTo: counterField.bottomAnchor),
+		colorView.topAnchor.constraint(equalTo: counterSlider.bottomAnchor, constant: 20),
+		colorView.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
+		colorView.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
+		mascotChoice.topAnchor.constraint(equalTo: colorView.bottomAnchor, constant: 20),
 		mascotChoice.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		mascotChoice.topAnchor.constraintGreaterThanOrEqualToSystemSpacingBelow(counterSlider.bottomAnchor, multiplier: 1.0),
 		mascot.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		mascot.topAnchor.constraintGreaterThanOrEqualToSystemSpacingBelow(mascotChoice.bottomAnchor, multiplier: 1.0),
-		mascot.bottomAnchor.constraint(lessThanOrEqualTo: incrementButton.topAnchor, constant: -20.0),
+		mascot.topAnchor.constraint(equalTo: mascotChoice.bottomAnchor, constant: 10.0),
+		mascot.bottomAnchor.constraint(equalTo: incrementButton.topAnchor, constant: -20.0),
 		decrementButton.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
 		decrementButton.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
 		incrementButton.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
