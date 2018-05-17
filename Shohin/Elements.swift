@@ -194,20 +194,34 @@ public enum ControlProp<Msg, Control: UIControl> : ViewProp {
 	}
 }
 
-enum ControlDefaults<Control: UIControl> {
-	static func makeDefault() -> Control {
-		let control = Control()
+@objc protocol DefaultFactory: class {
+	func makeDefault() -> UIView
+}
+
+extension UIControl : DefaultFactory {
+	func makeDefault() -> UIView {
+		let control = type(of: self).init()
+		control.translatesAutoresizingMaskIntoConstraints = false
+		return control
+	}
+}
+
+extension UIButton {
+	override func makeDefault() -> UIView {
+		let control = type(of: self).init(type: .system)
 		control.translatesAutoresizingMaskIntoConstraints = false
 		return control
 	}
 }
 
 struct ControlElement<Msg, Control: UIControl> {
+	typealias Item = Control
+	
 	let key: String
 	let props: [ControlProp<Msg, Control>]
 	
 	func prepare(existing: UIView?) -> UIView {
-		return existing as? Control ?? ControlDefaults.makeDefault()
+		return existing as? Control ?? Control().makeDefault()
 	}
 	
 	var prioritisedProps: [(Int, ControlProp<Msg, Control>)] {
@@ -258,16 +272,9 @@ extension ControlProp where Control : UIButton {
 	}
 }
 
-extension ControlDefaults where Control == UIButton {
-	static func makeDefault() -> Control {
-		let button = UIButton(type: .system)
-		button.translatesAutoresizingMaskIntoConstraints = false
-		return button
-	}
-}
-
 public func button<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProp<Msg, UIButton>]) -> Element<Msg> where Key.RawValue == String {
 	return control(key, props)
+//	return ControlElement(key: key.rawValue, props: props).toElement()
 }
 
 
