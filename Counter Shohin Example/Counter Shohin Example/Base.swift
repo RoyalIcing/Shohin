@@ -51,6 +51,9 @@ func updateCounter(message: CounterMsg, change: inout Change<CounterModel, Count
 		change.model.counter = newValue
 	case let .setMaximumValue(newValue):
 		change.model.maximumValue = newValue
+		if change.model.counter > newValue {
+			change.model.counter = newValue
+	}
 	case let .setMascot(newMascot):
 		change.model.mascot = newMascot
 	case .reset():
