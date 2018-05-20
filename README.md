@@ -25,23 +25,26 @@ enum CounterMsg {
 OK, let's connect the two with an update function, that takes a message and makes changes to a model.
 
 ~~~swift
-let intGenerator = RandomGenerator(toMessage: CounterMsg.setCounter)
+let randomInt = RandomGenerator(toMessage: CounterMsg.setCounter)
 
-func update(message: CounterMsg, u: inout Change<CounterModel, CounterMsg>) {
+func update(message: CounterMsg, model: inout CounterModel) -> Command<CounterMsg> {
 	switch message {
 	case .increment():
-		u.model.counter += 1
+		model.counter += 1
 	case .decrement():
-		u.model.counter -= 1
+		model.counter -= 1
 	case .randomize():
-		u.send(intGenerator.generate(min: 0, max: 10))
+	  // Command to generate a random number
+		return randomInt.generate(min: 0, max: 10)
 	case let .setCounter(newValue):
-		u.model.counter = newValue
+		model.counter = newValue
 	}
+	
+	return [] // No command
 }
 ~~~
 
-(Note: we also have a random generator here named `intGenerator`. In `update()`, the `.randomize` case calls `intGenerator.generate(min: 0, max: 10)`, which makes a command to later send a `.setCounter` message with the randomly generated number.)
+For `.randomize`, we use a random generator here named `intGenerator`. This generator is set up to send `CounterMsg.setCounter` when it has generated the number. It’s similar to a callback.
 
 Let's make a UI so people can view the model, and make changes to update it. Here we are making labels, fields, and buttons.
 
