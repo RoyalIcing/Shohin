@@ -174,8 +174,8 @@ public class LayoutContext {
 		return _view.safeAreaLayoutGuide
 	}
 	
-	public func view<Key: RawRepresentable>(_ key: Key) -> UIView? where Key.RawValue == String {
-		return _viewForKey(key.rawValue)
+	public func view<Key>(_ key: Key) -> UIView? {
+		return _viewForKey(String(describing: key))
 	}
 }
 
