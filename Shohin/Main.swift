@@ -265,7 +265,7 @@ public class Program<Model, Msg> {
 		view: UIView,
 		model: Model,
 		initialCommand: Command<Msg> = [],
-		update: @escaping (Msg, inout Change<Model, Msg>) -> () = { _, _ in },
+		update: @escaping (Msg, inout Model) -> Command<Msg> = { _, _ in [] },
 		render: @escaping (Model) -> [Element<Msg>] = { _ in [] },
 		layout: @escaping (Model, LayoutContext) -> [NSLayoutConstraint] = { _, _ in [] }
 		) {
@@ -273,11 +273,7 @@ public class Program<Model, Msg> {
 		self.reconciler = reconciler
 		self.store = Store(
 			initial: (model, initialCommand),
-			update: { model, message in
-				var u = Change<Model, Msg>(model: model)
-				update(message, &u)
-				return (u.model, u.command)
-		},
+			update: update,
 			connect: { send in
 				reconciler.send = send
 				return reconciler.usingModel(view: render, layout: layout)

@@ -46,17 +46,17 @@ extension Command : ExpressibleByArrayLiteral {
 }
 
 class Store<Model, Msg> {
-	private var _current: Model
-	private let updater: (Model, Msg) -> (Model, Command<Msg>)
+	private var _current: MonotonicallyTracked<Model>
+	private let updater: (Msg, inout Model) -> (Command<Msg>)
 	private var use: ((Model) -> ()) = { _ in }
 	
 	init(
 		initial: (Model, Command<Msg>),
-		update: @escaping (Model, Msg) -> (Model, Command<Msg>),
+		update: @escaping (Msg, inout Model) -> (Command<Msg>),
 		connect: (_ send: @escaping (Msg) -> ()) -> ((Model) -> ())
 		) {
 		let (current, command) = initial
-		self._current = current
+		self._current = MonotonicallyTracked(current)
 		
 		self.updater = update
 		self.use = connect(receive)
@@ -66,9 +66,8 @@ class Store<Model, Msg> {
 	}
 	
 	func receive(message: Msg) {
-		let (next, command) = self.updater(_current, message)
-		self._current = next
-		self.use(self._current)
+		let command = self.updater(message, &_current.value)
+		self.use(self._current.value)
 		command.run(send: self.receive)
 	}
 }

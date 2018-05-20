@@ -39,26 +39,28 @@ enum CounterMsg {
 
 let intGenerator = RandomGenerator(toMessage: CounterMsg.setCounter)
 
-func updateCounter(message: CounterMsg, change: inout Change<CounterModel, CounterMsg>) {
+func updateCounter(message: CounterMsg, model: inout CounterModel) -> Command<CounterMsg> {
 	switch message {
 	case .increment():
-		change.model.counter += 1
+		model.counter += 1
 	case .decrement():
-		change.model.counter -= 1
+		model.counter -= 1
 	case .randomize():
-		change.send(intGenerator.generate(min: 0, max: change.model.maximumValue))
+		return intGenerator.generate(min: 0, max: model.maximumValue)
 	case let .setCounter(newValue):
-		change.model.counter = newValue
+		model.counter = newValue
 	case let .setMaximumValue(newValue):
-		change.model.maximumValue = newValue
-		if change.model.counter > newValue {
-			change.model.counter = newValue
-	}
+		model.maximumValue = newValue
+		if model.counter > newValue {
+			model.counter = newValue
+		}
 	case let .setMascot(newMascot):
-		change.model.mascot = newMascot
+		model.mascot = newMascot
 	case .reset():
-		change.model.counter = 0
+		model.counter = 0
 	}
+	
+	return []
 }
 
 enum CounterKey: String {

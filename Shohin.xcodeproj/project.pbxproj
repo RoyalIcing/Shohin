@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B2557E0A20B1924F005DFAE8 /* Tracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2557E0920B1924F005DFAE8 /* Tracking.swift */; };
 		B25C5C5020AC2B050083C33D /* Generators.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25C5C4F20AC2B050083C33D /* Generators.swift */; };
 		B25C5C5220AC71E90083C33D /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25C5C5120AC71E90083C33D /* Helpers.swift */; };
 		B25C5C5620AC7EDB0083C33D /* ControlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25C5C5520AC7EDB0083C33D /* ControlTests.swift */; };
@@ -31,6 +32,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B2557E0920B1924F005DFAE8 /* Tracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tracking.swift; sourceTree = "<group>"; };
 		B25C5C4F20AC2B050083C33D /* Generators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Generators.swift; sourceTree = "<group>"; };
 		B25C5C5120AC71E90083C33D /* Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helpers.swift; sourceTree = "<group>"; };
 		B25C5C5520AC7EDB0083C33D /* ControlTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlTests.swift; sourceTree = "<group>"; };
@@ -89,6 +91,7 @@
 			children = (
 				B2F43E2420A9B0B7007A3744 /* Shohin.h */,
 				B2F43E2520A9B0B7007A3744 /* Info.plist */,
+				B2557E0920B1924F005DFAE8 /* Tracking.swift */,
 				B2F43E3D20A9B104007A3744 /* Base.swift */,
 				B25C5C4F20AC2B050083C33D /* Generators.swift */,
 				B2F43E3B20A9B0C9007A3744 /* Main.swift */,
@@ -219,6 +222,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B2557E0A20B1924F005DFAE8 /* Tracking.swift in Sources */,
 				B2F43E3E20A9B104007A3744 /* Base.swift in Sources */,
 				B25C5C5020AC2B050083C33D /* Generators.swift in Sources */,
 				B2F43E3C20A9B0C9007A3744 /* Main.swift in Sources */,
