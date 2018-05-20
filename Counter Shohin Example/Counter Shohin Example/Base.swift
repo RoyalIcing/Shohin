@@ -48,7 +48,7 @@ func updateCounter(message: CounterMsg, model: inout CounterModel) -> Command<Co
 	case .randomize():
 		return intGenerator.generate(min: 0, max: model.maximumValue)
 	case let .setCounter(newValue):
-		model.counter = newValue
+		model.counter = max(newValue, model.maximumValue)
 	case let .setMaximumValue(newValue):
 		model.maximumValue = newValue
 		if model.counter > newValue {
