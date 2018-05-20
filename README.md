@@ -2,6 +2,13 @@
 
 The Elm architecture in Swift for building iOS apps.
 
+## Philosophy
+
+- Uses value types
+- Opt-in: only use it where you like
+- Pragmatic: integrates with UIKit instead of trying to wholesale replace it
+- Extensible: create your own view elements and commands
+
 ## Usage
 
 - Model: the stored representation of your app's state. Likely a struct.
