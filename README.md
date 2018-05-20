@@ -1,4 +1,4 @@
-# Shohin
+# Shohin [![Build Status](https://travis-ci.org/RoyalIcing/Shohin.svg?branch=master)](https://travis-ci.org/RoyalIcing/Shohin)
 
 The Elm architecture in Swift for building iOS apps.
 
