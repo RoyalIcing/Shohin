@@ -95,8 +95,8 @@ struct LabelElement<Msg> {
 	}
 }
 
-public func label<Key: RawRepresentable, Msg>(_ key: Key, _ props: [LabelProp<Msg>]) -> Element<Msg> where Key.RawValue == String {
-	return LabelElement(key: key.rawValue, props: props).toElement()
+public func label<Key, Msg>(_ key: Key, _ props: [LabelProp<Msg>]) -> Element<Msg> {
+	return LabelElement(key: String(describing: key), props: props).toElement()
 }
 
 
@@ -163,8 +163,8 @@ struct FieldElement<Msg> {
 	}
 }
 
-public func field<Key: RawRepresentable, Msg>(_ key: Key, _ props: [FieldProp<Msg>]) -> Element<Msg> where Key.RawValue == String {
-	return FieldElement(key: key.rawValue, props: props).toElement()
+public func field<Key, Msg>(_ key: Key, _ props: [FieldProp<Msg>]) -> Element<Msg> {
+	return FieldElement(key: String(describing: key), props: props).toElement()
 }
 
 
@@ -257,8 +257,8 @@ struct ControlElement<Msg, Control: UIControl> {
 	}
 }
 
-public func control<Key: RawRepresentable, Msg, Control: UIControl>(_ key: Key, _ props: [ControlProp<Msg, Control>]) -> Element<Msg> where Key.RawValue == String {
-	return ControlElement(key: key.rawValue, props: props).toElement()
+public func control<Key, Msg, Control: UIControl>(_ key: Key, _ props: [ControlProp<Msg, Control>]) -> Element<Msg> {
+	return ControlElement(key: String(describing: key), props: props).toElement()
 }
 
 
@@ -272,7 +272,7 @@ extension ControlProp where Control : UIButton {
 	}
 }
 
-public func button<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProp<Msg, UIButton>]) -> Element<Msg> where Key.RawValue == String {
+public func button<Key, Msg>(_ key: Key, _ props: [ControlProp<Msg, UIButton>]) -> Element<Msg> {
 	return control(key, props)
 //	return ControlElement(key: key.rawValue, props: props).toElement()
 }
@@ -296,7 +296,7 @@ extension ControlProp where Control : UISlider {
 	}
 }
 
-public func slider<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProp<Msg, UISlider>]) -> Element<Msg> where Key.RawValue == String {
+public func slider<Key, Msg>(_ key: Key, _ props: [ControlProp<Msg, UISlider>]) -> Element<Msg> {
 	return control(key, props)
 }
 
@@ -319,7 +319,7 @@ extension ControlProp where Control : UIStepper {
 	}
 }
 
-public func stepper<Key: RawRepresentable, Msg>(_ key: Key, _ props: [ControlProp<Msg, UIStepper>]) -> Element<Msg> where Key.RawValue == String {
+public func stepper<Key, Msg>(_ key: Key, _ props: [ControlProp<Msg, UIStepper>]) -> Element<Msg> {
 	return control(key, props)
 }
 
@@ -358,7 +358,7 @@ public struct Segment {
 	}
 }
 
-public func segment<Key: RawRepresentable>(_ key: Key, _ content: Segment.Content, enabled: Bool = true, width: CGFloat = 0.0) -> Segment where Key.RawValue : CustomStringConvertible {
+public func segment<Key>(_ key: Key, _ content: Segment.Content, enabled: Bool = true, width: CGFloat = 0.0) -> Segment {
 	return Segment(key: String(describing: key), content: content, enabled: enabled, width: width)
 }
 
@@ -483,8 +483,8 @@ struct SegmentedControlElement<Msg> {
 	}
 }
 
-public func segmentedControl<Key: RawRepresentable, Msg>(_ key: Key, _ props: [SegmentedControlProp<Msg>]) -> Element<Msg> where Key.RawValue == String {
-	return SegmentedControlElement(key: key.rawValue, props: props).toElement()
+public func segmentedControl<Key, Msg>(_ key: Key, _ props: [SegmentedControlProp<Msg>]) -> Element<Msg> {
+	return SegmentedControlElement(key: String(describing: key), props: props).toElement()
 }
 
 
@@ -533,7 +533,7 @@ struct CustomViewElement<Msg, CustomView: UIView> {
 	}
 }
 
-public func customView<Key: RawRepresentable, Msg, CustomView: UIView>(_ key: Key, _ viewClass: CustomView.Type, _ props: [CustomViewProp<Msg, CustomView>]) -> Element<Msg> where Key.RawValue == String {
-	return CustomViewElement(key: key.rawValue, props: props).toElement()
+public func customView<Key, Msg, CustomView: UIView>(_ key: Key, _ viewClass: CustomView.Type, _ props: [CustomViewProp<Msg, CustomView>]) -> Element<Msg> {
+	return CustomViewElement(key: String(describing: key), props: props).toElement()
 }
 
