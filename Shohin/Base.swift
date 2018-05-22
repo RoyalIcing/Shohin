@@ -65,6 +65,10 @@ class Store<Model, Msg> {
 		command.run(send: self.receive)
 	}
 	
+	var currentModel: Model {
+		return _current.value
+	}
+	
 	func receive(message: Msg) {
 		let command = self.updater(message, &_current.value)
 		self.use(self._current.value)

@@ -292,4 +292,12 @@ public class Program<Model, Msg> {
 				return reconciler.usingModel(view: render, layout: layout)
 		})
 	}
+	
+	public var model: Model {
+		return store.currentModel
+	}
+	
+	public func send(_ message: Msg) {
+		store.receive(message: message)
+	}
 }
