@@ -18,7 +18,7 @@ public class RandomGenerator<Msg> {
 	
 	public func generate(min: Int, max: Int) -> Command<Msg> {
 		let toMessage = self.toMessage
-		return Command(store: Command.Store.routine({
+		return Command(store: Command.Storage.routine({
 			let value = min + Int(arc4random_uniform(UInt32(max - min + 1)))
 			return toMessage(value)
 		}))

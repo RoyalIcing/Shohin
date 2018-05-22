@@ -10,9 +10,9 @@ import Foundation
 
 
 public struct Command<Msg> {
-	indirect enum Store<Msg> {
+	indirect enum Storage<Msg> {
 		case routine(() -> Msg)
-		case batch([Store<Msg>])
+		case batch([Storage<Msg>])
 		
 		fileprivate func run(send: (Msg) -> ()) {
 			switch self {
@@ -24,24 +24,24 @@ public struct Command<Msg> {
 		}
 	}
 	
-	private let store: Store<Msg>
+	private let storage: Storage<Msg>
 	
-	init(store: Store<Msg>) {
-		self.store = store
+	init(store: Storage<Msg>) {
+		self.storage = store
 	}
 	
 	public init<S>(batch elements: S) where S : Sequence, Command == S.Element {
-		self.store = .batch(elements.map{ $0.store })
+		self.storage = .batch(elements.map{ $0.storage })
 	}
 	
 	public func run(send: (Msg) -> ()) {
-		self.store.run(send: send)
+		self.storage.run(send: send)
 	}
 }
 
 extension Command : ExpressibleByArrayLiteral {
 	public init(arrayLiteral elements: Command...) {
-		self.store = .batch(elements.map{ $0.store })
+		self.storage = .batch(elements.map{ $0.storage })
 	}
 }
 
