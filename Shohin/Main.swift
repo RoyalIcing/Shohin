@@ -160,10 +160,12 @@ class EventHandlerSet<Msg> {
 public class LayoutContext {
 	private let _view: UIView
 	private let _viewForKey: (String) -> UIView?
+	private let _guideForKey: (String) -> UILayoutGuide?
 	
-	init(view: UIView, viewForKey: @escaping (String) -> UIView?) {
+	init(view: UIView, viewForKey: @escaping (String) -> UIView?, guideForKey: @escaping (String) -> UILayoutGuide?) {
 		self._view = view
 		self._viewForKey = viewForKey
+		self._guideForKey = guideForKey
 	}
 	
 	public var marginsGuide: UILayoutGuide {
@@ -174,8 +176,16 @@ public class LayoutContext {
 		return _view.safeAreaLayoutGuide
 	}
 	
+	public var readableContentGuide: UILayoutGuide {
+		return _view.readableContentGuide
+	}
+	
 	public func view<Key>(_ key: Key) -> UIView? {
 		return _viewForKey(String(describing: key))
+	}
+	
+	public func guide<Key>(_ key: Key) -> UILayoutGuide? {
+		return _guideForKey(String(describing: key))
 	}
 }
 
@@ -186,9 +196,11 @@ class ViewReconciler<Msg> {
 	
 	private var keyToSubview: Dictionary<String, UIView> = [:]
 	private var keyToEventHandlers: Dictionary<String, EventHandlerSet<Msg>> = [:]
+	private var layoutGuideForKey: (String) -> UILayoutGuide?
 	
-	init(view: UIView) {
+	init(view: UIView, layoutGuideForKey: @escaping (String) -> UILayoutGuide?) {
 		self.view = view
+		self.layoutGuideForKey = layoutGuideForKey
 	}
 	
 	func update(_ elements: [Element<Msg>]) {
@@ -227,7 +239,7 @@ class ViewReconciler<Msg> {
 	func usingModel<Model>(view: @escaping (Model) -> [Element<Msg>], layout: @escaping (_ model: Model, _ context: LayoutContext) -> [NSLayoutConstraint]) -> ((Model) -> ()) {
 		return { model in
 			self.update(view(model))
-			let constraints = layout(model, LayoutContext(view: self.view, viewForKey: self.view(forKey:)))
+			let constraints = layout(model, LayoutContext(view: self.view, viewForKey: self.view(forKey:), guideForKey: self.layoutGuideForKey))
 			NSLayoutConstraint.activate(constraints)
 		}
 	}
@@ -267,9 +279,10 @@ public class Program<Model, Msg> {
 		initialCommand: Command<Msg> = [],
 		update: @escaping (Msg, inout Model) -> Command<Msg> = { _, _ in [] },
 		render: @escaping (Model) -> [Element<Msg>] = { _ in [] },
+		layoutGuideForKey: @escaping (String) -> UILayoutGuide? = { _ in nil },
 		layout: @escaping (Model, LayoutContext) -> [NSLayoutConstraint] = { _, _ in [] }
 		) {
-		let reconciler = ViewReconciler<Msg>(view: view)
+		let reconciler = ViewReconciler<Msg>(view: view, layoutGuideForKey: layoutGuideForKey)
 		self.reconciler = reconciler
 		self.store = Store(
 			initial: (model, initialCommand),
