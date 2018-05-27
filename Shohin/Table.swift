@@ -55,11 +55,18 @@ struct TableCellTemplate<Item, Msg> {
 	var layout: (_ item: Item, _ context: LayoutContext) -> [NSLayoutConstraint]
 }
 
-public class TableAssistant<Item, Msg> {
+public class TableAssistant<Model, Item, Msg> {
+	public var tableView: UITableView
+	public var model: Model
+	private var _update: (Msg, inout Model) -> ()
 	var cellIdentifiersToTemplates = [String: TableCellTemplate<Item, Msg>]()
 	var cellReconcilers = [ObjectIdentifier: ViewReconciler<Msg>]()
 	
-	public init() {}
+	public init(tableView: UITableView, initial: Model, update: @escaping (Msg, inout Model) -> ()) {
+		self.tableView = tableView
+		self.model = initial
+		self._update = update
+	}
 	
 	public func registerCells<ReuseIdentifier>(reuseIdentifier: ReuseIdentifier, render: @escaping (Item) -> [CellProp<Msg>], layout: @escaping (_ item: Item, _ context: LayoutContext) -> [NSLayoutConstraint], tableView: UITableView) {
 		let reuseIdentifierString = String(describing: reuseIdentifier)
@@ -71,14 +78,16 @@ public class TableAssistant<Item, Msg> {
 	public func cell<ReuseIdentifier>(_ reuseIdentifier: ReuseIdentifier, _ item: Item, tableView: UITableView) -> UITableViewCell {
 		let reuseIdentifierString = String(describing: reuseIdentifier)
 		let cellView = tableView.dequeueReusableCell(withIdentifier: reuseIdentifierString) as! TableCellView
-//		let style: UITableViewCellStyle = .default
-//		let view = TableCell(style: style, reuseIdentifier: reuseIdentifier)
 		let cellReconciler: ViewReconciler<Msg>
 		if let found = cellReconcilers[ObjectIdentifier(cellView)] {
 			cellReconciler = found
 		}
 		else {
 			cellReconciler = ViewReconciler<Msg>(view: cellView.contentView, layoutGuideForKey: { _ in nil })
+			cellReconciler.send = { message in
+				self._update(message, &self.model)
+				self.tableView.reloadData()
+			}
 			cellReconcilers[ObjectIdentifier(cellView)] = cellReconciler
 		}
 		

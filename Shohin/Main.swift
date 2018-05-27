@@ -180,6 +180,10 @@ public class LayoutContext {
 		return _view.readableContentGuide
 	}
 	
+	public var view: UIView {
+		return _view
+	}
+	
 	public func view<Key>(_ key: Key) -> UIView? {
 		return _viewForKey(String(describing: key))
 	}
