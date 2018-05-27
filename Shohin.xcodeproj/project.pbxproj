@@ -13,6 +13,7 @@
 		B25C5C5620AC7EDB0083C33D /* ControlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25C5C5520AC7EDB0083C33D /* ControlTests.swift */; };
 		B25C5C5820AC846F0083C33D /* Decoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25C5C5720AC846E0083C33D /* Decoding.swift */; };
 		B25C5C5A20AC88EB0083C33D /* DecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25C5C5920AC88EB0083C33D /* DecodingTests.swift */; };
+		B28A788120BA8B480070E450 /* Table.swift in Sources */ = {isa = PBXBuildFile; fileRef = B28A788020BA8B480070E450 /* Table.swift */; };
 		B2B5C7E420AB04E500942421 /* Elements.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2B5C7E320AB04E500942421 /* Elements.swift */; };
 		B2F43E2B20A9B0B7007A3744 /* Shohin.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B2F43E2120A9B0B7007A3744 /* Shohin.framework */; };
 		B2F43E3020A9B0B7007A3744 /* ShohinTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2F43E2F20A9B0B7007A3744 /* ShohinTests.swift */; };
@@ -38,6 +39,7 @@
 		B25C5C5520AC7EDB0083C33D /* ControlTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlTests.swift; sourceTree = "<group>"; };
 		B25C5C5720AC846E0083C33D /* Decoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Decoding.swift; sourceTree = "<group>"; };
 		B25C5C5920AC88EB0083C33D /* DecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DecodingTests.swift; sourceTree = "<group>"; };
+		B28A788020BA8B480070E450 /* Table.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Table.swift; sourceTree = "<group>"; };
 		B2B5C7E320AB04E500942421 /* Elements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Elements.swift; sourceTree = "<group>"; };
 		B2F43E2120A9B0B7007A3744 /* Shohin.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Shohin.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B2F43E2420A9B0B7007A3744 /* Shohin.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Shohin.h; sourceTree = "<group>"; };
@@ -96,6 +98,7 @@
 				B25C5C4F20AC2B050083C33D /* Generators.swift */,
 				B2F43E3B20A9B0C9007A3744 /* Main.swift */,
 				B2B5C7E320AB04E500942421 /* Elements.swift */,
+				B28A788020BA8B480070E450 /* Table.swift */,
 				B25C5C5720AC846E0083C33D /* Decoding.swift */,
 			);
 			path = Shohin;
@@ -223,6 +226,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B2557E0A20B1924F005DFAE8 /* Tracking.swift in Sources */,
+				B28A788120BA8B480070E450 /* Table.swift in Sources */,
 				B2F43E3E20A9B104007A3744 /* Base.swift in Sources */,
 				B25C5C5020AC2B050083C33D /* Generators.swift in Sources */,
 				B2F43E3C20A9B0C9007A3744 /* Main.swift in Sources */,

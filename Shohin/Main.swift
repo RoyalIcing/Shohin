@@ -235,13 +235,15 @@ class ViewReconciler<Msg> {
 	func view(forKey key: String) -> UIView? {
 		return keyToSubview[key]
 	}
-
-	func usingModel<Model>(view: @escaping (Model) -> [Element<Msg>], layout: @escaping (_ model: Model, _ context: LayoutContext) -> [NSLayoutConstraint]) -> ((Model) -> ()) {
-		return { model in
-			self.update(view(model))
-			let constraints = layout(model, LayoutContext(view: self.view, viewForKey: self.view(forKey:), guideForKey: self.layoutGuideForKey))
-			NSLayoutConstraint.activate(constraints)
-		}
+	
+	var layoutContext: LayoutContext {
+		return LayoutContext(view: self.view, viewForKey: self.view(forKey:), guideForKey: self.layoutGuideForKey)
+	}
+	
+	public func apply<Model>(model: Model, render: @escaping (Model) -> [Element<Msg>], layout: @escaping (_ model: Model, _ context: LayoutContext) -> [NSLayoutConstraint]) {
+		self.update(render(model))
+		let constraints = layout(model, layoutContext)
+		NSLayoutConstraint.activate(constraints)
 	}
 }
 
@@ -289,7 +291,9 @@ public class Program<Model, Msg> {
 			update: update,
 			connect: { send in
 				reconciler.send = send
-				return reconciler.usingModel(view: render, layout: layout)
+				return { model in
+					reconciler.apply(model: model, render: render, layout: layout)
+				}
 		})
 	}
 	

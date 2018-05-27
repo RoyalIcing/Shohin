@@ -58,7 +58,7 @@ public enum LabelProp<Msg> : ViewProp {
 		return .applyChange(ChangeApplier(keyPath, value: value))
 	}
 	
-	fileprivate func apply(to label: UILabel, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
+	func apply(to label: UILabel) {
 		switch self {
 		case let .text(text):
 			label.text = text
@@ -87,7 +87,7 @@ struct LabelElement<Msg> {
 	private func applyToView(_ view: UIView, registerEventHandler: (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) {
 		guard let label = view as? UILabel else { return }
 		
-		props.forEach { $0.apply(to: label, registerEventHandler: registerEventHandler) }
+		props.forEach { $0.apply(to: label) }
 	}
 	
 	func toElement() -> Element<Msg> {
