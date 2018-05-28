@@ -1,18 +1,17 @@
 # Shohin [![Build Status](https://travis-ci.org/RoyalIcing/Shohin.svg?branch=master)](https://travis-ci.org/RoyalIcing/Shohin)
 
-The Elm architecture in Swift for building iOS apps.
+Pragmatic React/Elm-like components & state management for iOS.
 
 ## Philosophy
 
-- Uses value types
-- Opt-in: only use it where you like
-- Pragmatic: integrates with UIKit instead of trying to wholesale replace it
-- Extensible: create your own view elements and commands
+- Completely opt-in: mix and match with normal iOS code.
+- Pragmatic: integrates with instead of trying to replace UIKit. Keep using view controllers.
+- Extensible: create your own view elements or commands.
 
 ## Usage
 
-- Model: the stored representation of your app's state. Likely a struct.
-- Message: requests to change the model. Likely an enum.
+- Model: the stored representation of your app's state. Usually a struct.
+- Message: requests to change the model. Usually an enum.
 
 ~~~swift
 import Shohin
@@ -24,8 +23,8 @@ struct CounterModel {
 enum CounterMsg {
 	case increment()
 	case decrement()
-	case randomize()
 	case setCounter(to: Int)
+	case randomize()
 }
 ~~~
 
@@ -40,20 +39,20 @@ func update(message: CounterMsg, model: inout CounterModel) -> Command<CounterMs
 		model.counter += 1
 	case .decrement():
 		model.counter -= 1
-	case .randomize():
-	  // Command to generate a random number
-		return randomInt.generate(min: 0, max: 10)
 	case let .setCounter(newValue):
 		model.counter = newValue
+	case .randomize():
+	  // Returns command to generate a random number
+		return randomInt.generate(min: 0, max: 10)
 	}
 	
 	return [] // No command
 }
 ~~~
 
-For `.randomize`, we use a random generator here named `intGenerator`. This generator is set up to send `CounterMsg.setCounter` when it has generated the number. It’s similar to a callback.
+For `.randomize()`, we use a random generator here named `randomInt`. This is set up to send `CounterMsg.setCounter(to:)` with the generated random number passed in. It’s similar to a callback.
 
-Let's make a UI so people can view the model, and make changes to update it. Here we are making labels, fields, and buttons.
+Let’s make a UI so people can view the model, and make changes to update it. Here we are making labels, fields, and buttons.
 
 We identify each element that the user interacts with using the `CounterKey` string enum.
 
@@ -117,10 +116,11 @@ Now let's get everything connected and running.
 let mainView = UIView(frame: CGRect(x: 0, y: 0, width: 500, height: 500))
 mainView.backgroundColor = #colorLiteral(red: 0.239215686917305, green: 0.674509823322296, blue: 0.968627452850342, alpha: 1.0)
 		
+// In a UIViewController, you would write the below in `viewDidLoad()`.
 let program = Program(view: mainView, model: CounterModel(), initialCommand: [], update: update, render: render, layout: layout)
 ~~~
 
-We now have an interactive app. In summary:
+We now have an interactive app! In summary:
 
 1. You have a **model**, which is presented (**rendered** and **laid out**) to the user as views.
 2. Interactions that the user makes (UI events) produce **messages**, which **update** the model.
