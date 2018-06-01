@@ -15,8 +15,8 @@ public enum CellProp<Msg> {
 	case content([ViewElement<Msg>])
 }
 
-@objc class TableCellView : UITableViewCell {
-	var customConstraints: [NSLayoutConstraint] = []
+class TableCellView<Msg> : UITableViewCell {
+	var contentReconciler: ViewReconciler<Msg>!
 	
 	override func prepareForReuse() {
 		super.prepareForReuse()
@@ -30,7 +30,7 @@ public enum CellProp<Msg> {
 		super.updateConstraints()
 	}
 	
-	fileprivate func setProps<Msg>(_ cellProps: [CellProp<Msg>], reconciler: ViewReconciler<Msg>) {
+	fileprivate func update(cellProps: [CellProp<Msg>], send: (Msg) -> ()) {
 		for cellProp in cellProps {
 			switch cellProp {
 			case let .backgroundColor(backgroundColor):
@@ -42,25 +42,31 @@ public enum CellProp<Msg> {
 					}
 				}
 			case let .content(elements):
-				reconciler.update(elements)
+				if contentReconciler == nil {
+					contentReconciler = ViewReconciler<Msg>(view: self.contentView, layoutGuideForKey: { _ in nil })
+				}
+				contentReconciler.update(elements)
 				break
 			}
 		}
 	}
+	
+	fileprivate var layoutContext: LayoutContext {
+		return contentReconciler.layoutContext
+	}
 }
 
-struct TableCellTemplate<Item, Msg> {
+struct TableCellTemplate<CellModel, Msg> {
 	var reuseIdentifier: String
-	var render: (Item) -> [CellProp<Msg>]
-	var layout: (_ item: Item, _ context: LayoutContext) -> [NSLayoutConstraint]
+	var render: (CellModel) -> [CellProp<Msg>]
+	var layout: (_ cellModel: CellModel, _ context: LayoutContext) -> [NSLayoutConstraint]
 }
 
-public class TableAssistant<Model, Item, Msg> {
+public class TableAssistant<Model, CellModel, Msg> {
 	public var tableView: UITableView
 	public var model: Model
 	private var _update: (Msg, inout Model) -> ()
-	var cellIdentifiersToTemplates = [String: TableCellTemplate<Item, Msg>]()
-	var cellReconcilers = [ObjectIdentifier: ViewReconciler<Msg>]()
+	var cellIdentifiersToTemplates = [String: TableCellTemplate<CellModel, Msg>]()
 	
 	public init(tableView: UITableView, initial: Model, update: @escaping (Msg, inout Model) -> ()) {
 		self.tableView = tableView
@@ -68,35 +74,29 @@ public class TableAssistant<Model, Item, Msg> {
 		self._update = update
 	}
 	
-	public func registerCells<ReuseIdentifier>(reuseIdentifier: ReuseIdentifier, render: @escaping (Item) -> [CellProp<Msg>], layout: @escaping (_ item: Item, _ context: LayoutContext) -> [NSLayoutConstraint], tableView: UITableView) {
+	private func send(_ message: Msg) {
+		self._update(message, &self.model)
+		self.tableView.reloadData()
+	}
+	
+	public func registerCells<ReuseIdentifier>(reuseIdentifier: ReuseIdentifier, render: @escaping (CellModel) -> [CellProp<Msg>], layout: @escaping (_ cellModel: CellModel, _ context: LayoutContext) -> [NSLayoutConstraint]) {
 		let reuseIdentifierString = String(describing: reuseIdentifier)
 		let cellTemplate = TableCellTemplate(reuseIdentifier: reuseIdentifierString, render: render, layout: layout)
 		cellIdentifiersToTemplates[reuseIdentifierString] = cellTemplate
-		tableView.register(TableCellView.self, forCellReuseIdentifier: reuseIdentifierString)
+		tableView.register(TableCellView<Msg>.self, forCellReuseIdentifier: reuseIdentifierString)
 	}
 	
-	public func cell<ReuseIdentifier>(_ reuseIdentifier: ReuseIdentifier, _ item: Item, tableView: UITableView) -> UITableViewCell {
+	public func cell<ReuseIdentifier>(_ reuseIdentifier: ReuseIdentifier, _ cellModel: CellModel) -> UITableViewCell {
 		let reuseIdentifierString = String(describing: reuseIdentifier)
-		let cellView = tableView.dequeueReusableCell(withIdentifier: reuseIdentifierString) as! TableCellView
-		let cellReconciler: ViewReconciler<Msg>
-		if let found = cellReconcilers[ObjectIdentifier(cellView)] {
-			cellReconciler = found
-		}
-		else {
-			cellReconciler = ViewReconciler<Msg>(view: cellView.contentView, layoutGuideForKey: { _ in nil })
-			cellReconciler.send = { message in
-				self._update(message, &self.model)
-				self.tableView.reloadData()
-			}
-			cellReconcilers[ObjectIdentifier(cellView)] = cellReconciler
-		}
+		let cellView = tableView.dequeueReusableCell(withIdentifier: reuseIdentifierString) as! TableCellView<Msg>
 		
 		let template = cellIdentifiersToTemplates[reuseIdentifierString]!
-		let props = template.render(item)
-		cellView.setProps(props, reconciler: cellReconciler)
-		NSLayoutConstraint.activate(
-			template.layout(item, cellReconciler.layoutContext)
-		)
+		let cellProps = template.render(cellModel)
+		cellView.update(cellProps: cellProps, send: { [weak self] in self?.send($0) })
+		
+		let constraints = template.layout(cellModel, cellView.layoutContext)
+		NSLayoutConstraint.activate(constraints)
+		
 		return cellView
 	}
 }

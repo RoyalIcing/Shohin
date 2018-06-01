@@ -363,20 +363,20 @@ class LayoutContext {
 ### UITableView (alpha: subject to change)
 
 - Model: the data used to render the table
-- Item: the data representing a cell
+- CellModel: the data representing a cell
 - Msg: changes sent by rendered elements in the table
 - `class TableAssistant`: used to render cells in a `UITableView`
 
 ```swift
-public class TableAssistant<Model, Item, Msg> {
+public class TableAssistant<Model, CellModel, Msg> {
   public var tableView: UITableView
   public var model: Model
 
   public init(tableView: UITableView, initial: Model, update: @escaping (Msg, inout Model) -> ())
 
-  public func registerCells<ReuseIdentifier>(reuseIdentifier: ReuseIdentifier, render: @escaping (Item) -> [CellProp<Msg>], layout: @escaping (_ item: Item, _ context: LayoutContext) -> [NSLayoutConstraint], tableView: UITableView)
+  public func registerCells<ReuseIdentifier>(reuseIdentifier: ReuseIdentifier, render: @escaping (CellModel) -> [CellProp<Msg>], layout: @escaping (_ cellModel: CellModel, _ context: LayoutContext) -> [NSLayoutConstraint])
 
-  public func cell<ReuseIdentifier>(_ reuseIdentifier: ReuseIdentifier, _ item: Item, tableView: UITableView) -> UITableViewCell
+  public func cell<ReuseIdentifier>(_ reuseIdentifier: ReuseIdentifier, _ cellModel: CellModel) -> UITableViewCell
 }
 ```
 
@@ -477,7 +477,7 @@ class MyTableViewController: UITableViewController {
     self.tableAssistant = TableAssistant<Model, MyItem, MyMsg>(tableView: tableView, initial: Model(), update: update)
 
     for cellIdentifier in CellIdentifier.allCasess {
-      tableAssistant.registerCells(reuseIdentifier: cellIdentifier, render: cellIdentifier.render, layout: cellIdentifier.layout, tableView: tableView)
+      tableAssistant.registerCells(reuseIdentifier: cellIdentifier, render: cellIdentifier.render, layout: cellIdentifier.layout)
     }
     
     tableView.reloadData()
@@ -496,7 +496,7 @@ class MyTableViewController: UITableViewController {
   override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cellIdentifier = // …
     let item = // …
-    return tableAssistant.cell(cellIdentifier, item, tableView: tableView)
+    return tableAssistant.cell(cellIdentifier, item)
   }
 }
 ```
