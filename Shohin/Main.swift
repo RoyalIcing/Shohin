@@ -43,7 +43,7 @@ public struct EventHandlingOptions {
 }
 
 
-public struct Element<Msg> {
+public struct ViewElement<Msg> {
 	public typealias MakeView = (UIView?) -> UIView
 	public typealias ViewAndRegisterEventHandler = (UIView, (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) -> ()
 	
@@ -207,7 +207,7 @@ class ViewReconciler<Msg> {
 		self.layoutGuideForKey = layoutGuideForKey
 	}
 	
-	func update(_ elements: [Element<Msg>]) {
+	func update(_ elements: [ViewElement<Msg>]) {
 		for element in elements {
 			let key = element.key
 			let handlers: EventHandlerSet<Msg>
@@ -244,7 +244,7 @@ class ViewReconciler<Msg> {
 		return LayoutContext(view: self.view, viewForKey: self.view(forKey:), guideForKey: self.layoutGuideForKey)
 	}
 	
-	public func apply<Model>(model: Model, render: @escaping (Model) -> [Element<Msg>], layout: @escaping (_ model: Model, _ context: LayoutContext) -> [NSLayoutConstraint]) {
+	public func apply<Model>(model: Model, render: @escaping (Model) -> [ViewElement<Msg>], layout: @escaping (_ model: Model, _ context: LayoutContext) -> [NSLayoutConstraint]) {
 		self.update(render(model))
 		let constraints = layout(model, layoutContext)
 		NSLayoutConstraint.activate(constraints)
@@ -284,7 +284,7 @@ public class Program<Model, Msg> {
 		model: Model,
 		initialCommand: Command<Msg> = [],
 		update: @escaping (Msg, inout Model) -> Command<Msg> = { _, _ in [] },
-		render: @escaping (Model) -> [Element<Msg>] = { _ in [] },
+		render: @escaping (Model) -> [ViewElement<Msg>] = { _ in [] },
 		layoutGuideForKey: @escaping (String) -> UILayoutGuide? = { _ in nil },
 		layout: @escaping (Model, LayoutContext) -> [NSLayoutConstraint] = { _, _ in [] }
 		) {

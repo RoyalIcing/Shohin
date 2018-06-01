@@ -36,7 +36,7 @@ enum ElementCodingKey : String, CodingKey {
 	case props
 }
 
-extension Element : Decodable {
+extension ViewElement : Decodable {
 	public init(from decoder: Decoder) throws {
 		let c = try decoder.container(keyedBy: ElementCodingKey.self)
 		let type = try c.decode(String.self, forKey: .type)

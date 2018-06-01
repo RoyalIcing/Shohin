@@ -29,7 +29,7 @@ class DecodingTests: XCTestCase {
 	
 	func testButtonElement() throws {
 		let jsonDecoder = JSONDecoder()
-		let element = try jsonDecoder.decode(Element<Never>.self, from: buttonElementJSONData)
+		let element = try jsonDecoder.decode(ViewElement<Never>.self, from: buttonElementJSONData)
 		
 		XCTAssertEqual(element.key, "a")
 		

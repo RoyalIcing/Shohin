@@ -12,7 +12,7 @@ import UIKit
 public enum CellProp<Msg> {
 	case backgroundColor(UIColor)
 	case textLabel([LabelProp<Msg>])
-	case content([Element<Msg>])
+	case content([ViewElement<Msg>])
 }
 
 @objc class TableCellView : UITableViewCell {

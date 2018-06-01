@@ -96,7 +96,7 @@ extension Mascot {
 	}
 }
 
-func renderCounter(model: CounterModel) -> [Element<CounterMsg>] {
+func renderCounter(model: CounterModel) -> [ViewElement<CounterMsg>] {
 	return [
 		label(CounterKey.counter, [
 			.tag(1),

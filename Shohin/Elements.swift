@@ -90,12 +90,12 @@ struct LabelElement<Msg> {
 		props.forEach { $0.apply(to: label) }
 	}
 	
-	func toElement() -> Element<Msg> {
-		return Element(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
+	func toElement() -> ViewElement<Msg> {
+		return ViewElement(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
 	}
 }
 
-public func label<Key, Msg>(_ key: Key, _ props: [LabelProp<Msg>]) -> Element<Msg> {
+public func label<Key, Msg>(_ key: Key, _ props: [LabelProp<Msg>]) -> ViewElement<Msg> {
 	return LabelElement(key: String(describing: key), props: props).toElement()
 }
 
@@ -158,12 +158,12 @@ struct FieldElement<Msg> {
 		props.forEach { $0.apply(to: field, registerEventHandler: registerEventHandler) }
 	}
 	
-	func toElement() -> Element<Msg> {
-		return Element(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
+	func toElement() -> ViewElement<Msg> {
+		return ViewElement(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
 	}
 }
 
-public func field<Key, Msg>(_ key: Key, _ props: [FieldProp<Msg>]) -> Element<Msg> {
+public func field<Key, Msg>(_ key: Key, _ props: [FieldProp<Msg>]) -> ViewElement<Msg> {
 	return FieldElement(key: String(describing: key), props: props).toElement()
 }
 
@@ -252,12 +252,12 @@ struct ControlElement<Msg, Control: UIControl> {
 		}
 	}
 	
-	func toElement() -> Element<Msg> {
-		return Element(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
+	func toElement() -> ViewElement<Msg> {
+		return ViewElement(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
 	}
 }
 
-public func control<Key, Msg, Control: UIControl>(_ key: Key, _ props: [ControlProp<Msg, Control>]) -> Element<Msg> {
+public func control<Key, Msg, Control: UIControl>(_ key: Key, _ props: [ControlProp<Msg, Control>]) -> ViewElement<Msg> {
 	return ControlElement(key: String(describing: key), props: props).toElement()
 }
 
@@ -272,7 +272,7 @@ extension ControlProp where Control : UIButton {
 	}
 }
 
-public func button<Key, Msg>(_ key: Key, _ props: [ControlProp<Msg, UIButton>]) -> Element<Msg> {
+public func button<Key, Msg>(_ key: Key, _ props: [ControlProp<Msg, UIButton>]) -> ViewElement<Msg> {
 	return control(key, props)
 //	return ControlElement(key: key.rawValue, props: props).toElement()
 }
@@ -296,7 +296,7 @@ extension ControlProp where Control : UISlider {
 	}
 }
 
-public func slider<Key, Msg>(_ key: Key, _ props: [ControlProp<Msg, UISlider>]) -> Element<Msg> {
+public func slider<Key, Msg>(_ key: Key, _ props: [ControlProp<Msg, UISlider>]) -> ViewElement<Msg> {
 	return control(key, props)
 }
 
@@ -319,7 +319,7 @@ extension ControlProp where Control : UIStepper {
 	}
 }
 
-public func stepper<Key, Msg>(_ key: Key, _ props: [ControlProp<Msg, UIStepper>]) -> Element<Msg> {
+public func stepper<Key, Msg>(_ key: Key, _ props: [ControlProp<Msg, UIStepper>]) -> ViewElement<Msg> {
 	return control(key, props)
 }
 
@@ -478,12 +478,12 @@ struct SegmentedControlElement<Msg> {
 		state.apply(to: control, registerEventHandler: registerEventHandler)
 	}
 	
-	func toElement() -> Element<Msg> {
-		return Element(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
+	func toElement() -> ViewElement<Msg> {
+		return ViewElement(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
 	}
 }
 
-public func segmentedControl<Key, Msg>(_ key: Key, _ props: [SegmentedControlProp<Msg>]) -> Element<Msg> {
+public func segmentedControl<Key, Msg>(_ key: Key, _ props: [SegmentedControlProp<Msg>]) -> ViewElement<Msg> {
 	return SegmentedControlElement(key: String(describing: key), props: props).toElement()
 }
 
@@ -528,12 +528,12 @@ struct CustomViewElement<Msg, CustomView: UIView> {
 		props.forEach { $0.apply(to: customView, registerEventHandler: registerEventHandler) }
 	}
 	
-	func toElement() -> Element<Msg> {
-		return Element(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
+	func toElement() -> ViewElement<Msg> {
+		return ViewElement(key: key, makeViewIfNeeded: prepare, applyToView: applyToView)
 	}
 }
 
-public func customView<Key, Msg, CustomView: UIView>(_ key: Key, _ viewClass: CustomView.Type, _ props: [CustomViewProp<Msg, CustomView>]) -> Element<Msg> {
+public func customView<Key, Msg, CustomView: UIView>(_ key: Key, _ viewClass: CustomView.Type, _ props: [CustomViewProp<Msg, CustomView>]) -> ViewElement<Msg> {
 	return CustomViewElement(key: String(describing: key), props: props).toElement()
 }
 
