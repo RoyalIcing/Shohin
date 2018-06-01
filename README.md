@@ -22,14 +22,14 @@ Our message `CounterMsg` has four possible choices for the different user intera
 import Shohin
 
 struct CounterModel {
-	var counter: Int = 0
+  var counter: Int = 0
 }
 
 enum CounterMsg {
-	case increment()
-	case decrement()
-	case setCounter(to: Int)
-	case randomize()
+  case increment()
+  case decrement()
+  case setCounter(to: Int)
+  case randomize()
 }
 ~~~
 
@@ -39,19 +39,19 @@ Let's connect the model to the message with an update function, which takes a me
 let randomInt = RandomGenerator(toMessage: CounterMsg.setCounter)
 
 func update(message: CounterMsg, model: inout CounterModel) -> Command<CounterMsg> {
-	switch message {
-	case .increment():
-		model.counter += 1
-	case .decrement():
-		model.counter -= 1
-	case let .setCounter(newValue):
-		model.counter = newValue
-	case .randomize():
-	  // Returns command to generate a random number
-		return randomInt.generate(min: 0, max: 10)
-	}
-	
-	return [] // No command
+  switch message {
+  case .increment():
+    model.counter += 1
+  case .decrement():
+    model.counter -= 1
+  case let .setCounter(newValue):
+    model.counter = newValue
+  case .randomize():
+    // Returns command to generate a random number
+    return randomInt.generate(min: 0, max: 10)
+  }
+  
+  return [] // No command
 }
 ~~~
 
@@ -63,33 +63,33 @@ We identify each element that the user interacts with using the `CounterKey` str
 
 ~~~swift
 enum CounterKey: String {
-	case counter, increment, decrement, randomize, counterField
+  case counter, increment, decrement, randomize, counterField
 }
 
 func render(model: CounterModel) -> [Element<CounterMsg>] {
-	return [
-		label(CounterKey.counter, [
-			.text("Counter:"),
-			.textAlignment(.center),
-		]),
-		field(CounterKey.counterField, [
-			.text("\(model.counter)"),
-			.onChange { CounterMsg.setCounter(to: $0.text.flatMap(Int.init) ?? 0) }
-		]),
-		button(CounterKey.increment, [
-			.title("Increment", for: .normal),
-			.onPress(CounterMsg.increment),
-		]),
-		button(CounterKey.decrement, [
-			.title("Decrement", for: .normal),
-			.onPress(CounterMsg.decrement),
-			.set(\.tintColor, to: UIColor.red),
-		]),
-		button(CounterKey.randomize, [
-			.title("Randomize", for: .normal),
-			.onPress(CounterMsg.randomize),
-		]),
-	]
+  return [
+    label(CounterKey.counter, [
+      .text("Counter:"),
+      .textAlignment(.center),
+    ]),
+    field(CounterKey.counterField, [
+      .text("\(model.counter)"),
+      .onChange { CounterMsg.setCounter(to: $0.text.flatMap(Int.init) ?? 0) }
+    ]),
+    button(CounterKey.increment, [
+      .title("Increment", for: .normal),
+      .onPress(CounterMsg.increment),
+    ]),
+    button(CounterKey.decrement, [
+      .title("Decrement", for: .normal),
+      .onPress(CounterMsg.decrement),
+      .set(\.tintColor, to: UIColor.red),
+    ]),
+    button(CounterKey.randomize, [
+      .title("Randomize", for: .normal),
+      .onPress(CounterMsg.randomize),
+    ]),
+  ]
 }
 ~~~
 
@@ -97,21 +97,21 @@ We can use AutoLayout too, making constraints between each UI element, and to th
 
 ~~~swift
 func layout(model: CounterModel, context: LayoutContext) -> [NSLayoutConstraint] {
-	let margins = context.marginsGuide
-	let counterView = context.view(CounterKey.counter)!
-	let decrementButton = context.view(CounterKey.decrement)!
-	let incrementButton = context.view(CounterKey.increment)!
-	let randomizeButton = context.view(CounterKey.randomize)!
-	return [
-		counterView.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		counterView.topAnchor.constraint(equalTo: margins.topAnchor),
-		decrementButton.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
-		decrementButton.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
-		incrementButton.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
-		incrementButton.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
-		randomizeButton.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
-		randomizeButton.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
-	]
+  let margins = context.marginsGuide
+  let counterView = context.view(CounterKey.counter)!
+  let decrementButton = context.view(CounterKey.decrement)!
+  let incrementButton = context.view(CounterKey.increment)!
+  let randomizeButton = context.view(CounterKey.randomize)!
+  return [
+    counterView.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
+    counterView.topAnchor.constraint(equalTo: margins.topAnchor),
+    decrementButton.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
+    decrementButton.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
+    incrementButton.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
+    incrementButton.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
+    randomizeButton.centerXAnchor.constraint(equalTo: margins.centerXAnchor),
+    randomizeButton.bottomAnchor.constraint(equalTo: margins.bottomAnchor),
+  ]
 }
 ~~~
 
@@ -120,7 +120,7 @@ Now let's get everything connected and running.
 ~~~swift
 let mainView = UIView(frame: CGRect(x: 0, y: 0, width: 500, height: 500))
 mainView.backgroundColor = #colorLiteral(red: 0.239215686917305, green: 0.674509823322296, blue: 0.968627452850342, alpha: 1.0)
-		
+    
 // In a UIViewController, you would write the below in `viewDidLoad()`.
 let program = Program(view: mainView, model: CounterModel(), initialCommand: [], update: update, render: render, layout: layout)
 ~~~
@@ -171,8 +171,8 @@ struct ViewElement<Msg> {
   typealias ViewAndRegisterEventHandler = (UIView, (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) -> ()
 
   var key: String { get set }
-	var makeViewIfNeeded: MakeView { get set }
-	var applyToView: ViewAndRegisterEventHandler { get set }
+  var makeViewIfNeeded: MakeView { get set }
+  var applyToView: ViewAndRegisterEventHandler { get set }
 
   init(
     key: String,
@@ -404,7 +404,7 @@ enum MyMsg {
 }
 
 private struct MyItem {
-	// …
+  // …
 }
 
 extension CellIdentifier {
@@ -414,43 +414,43 @@ extension CellIdentifier {
   }
 
   func render(item: MyItem) -> [CellProp<MyMsg>] {
-		switch self {
-		case .red:
-			return [
-				.backgroundColor(UIColor.red),
-			]
-		case .orange:
-			return [
-				.backgroundColor(UIColor.orange),
-				.content([
-					label(ElementKey.label, [
-						.text("Orange"),
-						.set(\.textColor, to: black),
-					]),
-					button(ElementKey.button, [
-						.title("Orange", for: .normal),
-						.set(\.font, to: UIFont.boldSystemFont(ofSize: UIFont.buttonFontSize)),
-						.onPress { .copyText("Orange") }
-					])
-				])
-			]
-		case .blue:
-			return [
-				.backgroundColor(UIColor.blue),
-				.content([
-					label(ElementKey.label, [
-						.text("Blue"),
-						.set(\.textColor, to: black),
-					]),
-					button(ElementKey.button, [
-						.title("Blue", for: .normal),
-						.set(\.font, to: UIFont.boldSystemFont(ofSize: UIFont.buttonFontSize)),
-						.onPress { .copyText("Blue") }
-					])
-				])
-			]
-		}
-	}
+    switch self {
+    case .red:
+      return [
+        .backgroundColor(UIColor.red),
+      ]
+    case .orange:
+      return [
+        .backgroundColor(UIColor.orange),
+        .content([
+          label(ElementKey.label, [
+            .text("Orange"),
+            .set(\.textColor, to: black),
+          ]),
+          button(ElementKey.button, [
+            .title("Orange", for: .normal),
+            .set(\.font, to: UIFont.boldSystemFont(ofSize: UIFont.buttonFontSize)),
+            .onPress { .copyText("Orange") }
+          ])
+        ])
+      ]
+    case .blue:
+      return [
+        .backgroundColor(UIColor.blue),
+        .content([
+          label(ElementKey.label, [
+            .text("Blue"),
+            .set(\.textColor, to: black),
+          ]),
+          button(ElementKey.button, [
+            .title("Blue", for: .normal),
+            .set(\.font, to: UIFont.boldSystemFont(ofSize: UIFont.buttonFontSize)),
+            .onPress { .copyText("Blue") }
+          ])
+        ])
+      ]
+    }
+  }
 }
 
 func layout(item: MyItem, context: LayoutContext) -> [NSLayoutConstraint] {
@@ -491,7 +491,7 @@ class MyTableViewController: UITableViewController {
 
   override func tableView(_ tableView: UITableView, numberOfRowsInSection sectionIndex: Int) -> Int {
     // …
-	}
+  }
 
   override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cellIdentifier = // …
