@@ -10,8 +10,13 @@ Pragmatic React/Elm-like components & state management for iOS.
 
 ## Usage
 
-- Model: the stored representation of your app's state. Usually a struct.
-- Message: requests to change the model. Usually an enum.
+First, we import the Shohin library. We are going to build a number counter, with buttons to increment and decrement. There will also a random button to choose a random number, and a text field to let the user choose their own number.
+
+Without any of the interface, what our data model boils down to is a single number, which we can store as an `Int`.
+
+We declare our data model `CounterModel`. Here we use a `struct` with an `Int` variable that will store our counter.
+
+Our message `CounterMsg` has four possible choices for the different user interactions that will change the model. One to increment by 1, on to decrement by 1, one to completely change the counter to a specified `Int`, and another to change it to a random number.
 
 ~~~swift
 import Shohin
@@ -28,7 +33,7 @@ enum CounterMsg {
 }
 ~~~
 
-OK, let's connect the two with an update function, that takes a message and makes changes to a model.
+Let's connect the model to the message with an update function, which takes a message and makes changes to the model.
 
 ~~~swift
 let randomInt = RandomGenerator(toMessage: CounterMsg.setCounter)
@@ -125,3 +130,13 @@ We now have an interactive app! In summary:
 1. You have a **model**, which is presented (**rendered** and **laid out**) to the user as views.
 2. Interactions that the user makes (UI events) produce **messages**, which **update** the model.
 3. These **updates** cause the views to be **rendered** and **laid out** again.
+
+## Glossary
+
+- Model: the stored representation of your app's state. Usually a struct.
+- Message: requests to change the model. Usually an enum.
+- View element: value which represents a view (UIView / UIButton / UILabel etc) and its properties (‘props’)
+- render: function implemented to take the current model and return view elements to be displayed to the user.
+- layout: function implemented to take the current model and a context to the rendered views, and return an array of `NSLayoutConstraint` constraining the rendered view to each other and their containing superview.
+- update: function implemented to take the current model and a message to change the model. You mutate the model, and after your render and layout functions will be called again to update the views.
+- Program: connects all of the above into a running cycle of rendering, layout, respond to user input, and updating the model.
