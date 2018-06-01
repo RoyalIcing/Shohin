@@ -16,7 +16,7 @@ public enum CellProp<Msg> {
 }
 
 class TableCellView<Msg> : UITableViewCell {
-	var contentReconciler: ViewReconciler<Msg>!
+	lazy var contentReconciler: ViewReconciler<Msg> = ViewReconciler<Msg>(view: self.contentView, layoutGuideForKey: { _ in nil })
 	
 	override func prepareForReuse() {
 		super.prepareForReuse()
@@ -42,17 +42,14 @@ class TableCellView<Msg> : UITableViewCell {
 					}
 				}
 			case let .content(elements):
-				if contentReconciler == nil {
-					contentReconciler = ViewReconciler<Msg>(view: self.contentView, layoutGuideForKey: { _ in nil })
-				}
-				contentReconciler.update(elements)
+				self.contentReconciler.update(elements)
 				break
 			}
 		}
 	}
 	
 	fileprivate var layoutContext: LayoutContext {
-		return contentReconciler.layoutContext
+		return self.contentReconciler.layoutContext
 	}
 }
 
