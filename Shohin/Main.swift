@@ -251,30 +251,6 @@ class ViewReconciler<Msg> {
 	}
 }
 
-public struct Change<Model, Msg> {
-	var changeCount = 0
-	
-	public var model: Model {
-		didSet {
-			changeCount += 1
-		}
-	}
-	
-	private var commands: [Command<Msg>] = []
-	
-	init(model: Model) {
-		self.model = model
-	}
-	
-	public mutating func send(_ command: Command<Msg>) {
-		commands.append(command)
-	}
-	
-	var command: Command<Msg> {
-		return Command(batch: commands)
-	}
-}
-
 public class Program<Model, Msg> {
 	let reconciler: ViewReconciler<Msg>
 	let store: Store<Model, Msg>!
