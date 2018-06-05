@@ -274,7 +274,6 @@ extension ControlProp where Control : UIButton {
 
 public func button<Key, Msg>(_ key: Key, _ props: [ControlProp<Msg, UIButton>]) -> ViewElement<Msg> {
 	return control(key, props)
-//	return ControlElement(key: key.rawValue, props: props).toElement()
 }
 
 
@@ -321,6 +320,17 @@ extension ControlProp where Control : UIStepper {
 
 public func stepper<Key, Msg>(_ key: Key, _ props: [ControlProp<Msg, UIStepper>]) -> ViewElement<Msg> {
 	return control(key, props)
+}
+
+
+extension ControlProp where Control : UISwitch {
+    public static func on(_ on: Bool, animated: Bool) -> ControlProp {
+        return .applyChange(ChangeApplier(applier: { $0.setOn(on, animated: animated) }), stage: 0)
+    }
+}
+
+public func `switch`<Key, Msg>(_ key: Key, _ props: [ControlProp<Msg, UISwitch>]) -> ViewElement<Msg> {
+    return control(key, props)
 }
 
 
