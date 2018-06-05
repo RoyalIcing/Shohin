@@ -324,8 +324,18 @@ public func stepper<Key, Msg>(_ key: Key, _ props: [ControlProp<Msg, UIStepper>]
 
 
 extension ControlProp where Control : UISwitch {
-    public static func on(_ on: Bool, animated: Bool) -> ControlProp {
-        return .applyChange(ChangeApplier(applier: { $0.setOn(on, animated: animated) }), stage: 0)
+    public static func isOn(_ on: Bool, animated: Bool) -> ControlProp {
+        return .applyChange(ChangeApplier(applier: {
+            if $0.isOn != on {
+                $0.setOn(on, animated: animated)
+            }
+        }), stage: 0)
+    }
+}
+
+extension ViewElement {
+    public static func `switch`<Key>(_ key: Key, _ props: [ControlProp<Msg, UISwitch>]) -> ViewElement<Msg> {
+        return control(key, props)
     }
 }
 

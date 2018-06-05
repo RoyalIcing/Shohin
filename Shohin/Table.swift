@@ -16,6 +16,7 @@ public enum CellProp<Msg> {
 }
 
 class TableCellView<Msg> : UITableViewCell {
+    var reuseIdentifierString: String!
 	lazy var contentReconciler: ViewReconciler<Msg> = ViewReconciler<Msg>(view: self.contentView, layoutGuideForKey: { _ in nil })
 	
 	override func prepareForReuse() {
@@ -30,7 +31,7 @@ class TableCellView<Msg> : UITableViewCell {
 		super.updateConstraints()
 	}
 	
-	fileprivate func update(cellProps: [CellProp<Msg>], send: (Msg) -> ()) {
+	fileprivate func update(cellProps: [CellProp<Msg>], send: @escaping (Msg) -> ()) {
 		for cellProp in cellProps {
 			switch cellProp {
 			case let .backgroundColor(backgroundColor):
@@ -42,6 +43,7 @@ class TableCellView<Msg> : UITableViewCell {
 					}
 				}
 			case let .content(elements):
+                self.contentReconciler.send = send
 				self.contentReconciler.update(elements)
 				break
 			}
@@ -62,19 +64,48 @@ struct TableCellTemplate<CellModel, Msg> {
 public class TableAssistant<Model, CellModel, Msg> {
 	public var tableView: UITableView
 	public var model: Model
+    private var _cellForRowAt: (IndexPath) -> (reuseIdentifier: String, model: CellModel)
 	private var _update: (Msg, inout Model) -> ()
 	var cellIdentifiersToTemplates = [String: TableCellTemplate<CellModel, Msg>]()
 	
-	public init(tableView: UITableView, initial: Model, update: @escaping (Msg, inout Model) -> ()) {
+    public init(tableView: UITableView, cellForRowAt: @escaping (IndexPath) -> (reuseIdentifier: String, model: CellModel), initial: Model, update: @escaping (Msg, inout Model) -> ()) {
 		self.tableView = tableView
 		self.model = initial
+        self._cellForRowAt = cellForRowAt
 		self._update = update
 	}
 	
 	private func send(_ message: Msg) {
 		self._update(message, &self.model)
-		self.tableView.reloadData()
+        self.rerender()
 	}
+    
+    private func rerender() {
+        guard let indexPaths = self.tableView.indexPathsForVisibleRows
+            else { return }
+        
+        for indexPath in indexPaths {
+            guard let cellView = self.tableView.cellForRow(at: indexPath) as? TableCellView<Msg>
+                else { continue }
+            
+            let (_, cellModel) = self._cellForRowAt(indexPath)
+            self.update(cellView: cellView, cellModel: cellModel)
+        }
+    }
+    
+    private func update(cellView: TableCellView<Msg>, cellModel: CellModel) {
+        let template = cellIdentifiersToTemplates[cellView.reuseIdentifierString]!
+        let cellProps = template.render(cellModel)
+        cellView.update(
+            cellProps: cellProps,
+            send: { [weak self] in
+                self?.send($0)
+            }
+        )
+        
+        let constraints = template.layout(cellModel, cellView.layoutContext)
+        NSLayoutConstraint.activate(constraints)
+    }
 	
 	public func registerCells<ReuseIdentifier>(reuseIdentifier: ReuseIdentifier, render: @escaping (CellModel) -> [CellProp<Msg>], layout: @escaping (_ cellModel: CellModel, _ context: LayoutContext) -> [NSLayoutConstraint]) {
 		let reuseIdentifierString = String(describing: reuseIdentifier)
@@ -82,18 +113,14 @@ public class TableAssistant<Model, CellModel, Msg> {
 		cellIdentifiersToTemplates[reuseIdentifierString] = cellTemplate
 		tableView.register(TableCellView<Msg>.self, forCellReuseIdentifier: reuseIdentifierString)
 	}
-	
-	public func cell<ReuseIdentifier>(_ reuseIdentifier: ReuseIdentifier, _ cellModel: CellModel) -> UITableViewCell {
-		let reuseIdentifierString = String(describing: reuseIdentifier)
-		let cellView = tableView.dequeueReusableCell(withIdentifier: reuseIdentifierString) as! TableCellView<Msg>
-		
-		let template = cellIdentifiersToTemplates[reuseIdentifierString]!
-		let cellProps = template.render(cellModel)
-		cellView.update(cellProps: cellProps, send: { [weak self] in self?.send($0) })
-		
-		let constraints = template.layout(cellModel, cellView.layoutContext)
-		NSLayoutConstraint.activate(constraints)
-		
-		return cellView
-	}
+    
+    public func cell(forRowAt indexPath: IndexPath) -> UITableViewCell {
+        let (reuseIdentifier, cellModel) = self._cellForRowAt(indexPath)
+        let cellView = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier) as! TableCellView<Msg>
+        cellView.reuseIdentifierString = reuseIdentifier
+        
+        self.update(cellView: cellView, cellModel: cellModel)
+        
+        return cellView
+    }
 }
