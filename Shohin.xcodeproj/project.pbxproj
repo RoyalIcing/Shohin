@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		B253736220E61869004F385C /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = B253736120E61869004F385C /* Utils.swift */; };
+		B253736420E6190E004F385C /* LayerElements.swift in Sources */ = {isa = PBXBuildFile; fileRef = B253736320E6190E004F385C /* LayerElements.swift */; };
 		B2557E0A20B1924F005DFAE8 /* Tracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2557E0920B1924F005DFAE8 /* Tracking.swift */; };
 		B25C5C5020AC2B050083C33D /* Generators.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25C5C4F20AC2B050083C33D /* Generators.swift */; };
 		B25C5C5220AC71E90083C33D /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25C5C5120AC71E90083C33D /* Helpers.swift */; };
@@ -35,6 +36,7 @@
 
 /* Begin PBXFileReference section */
 		B253736120E61869004F385C /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		B253736320E6190E004F385C /* LayerElements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayerElements.swift; sourceTree = "<group>"; };
 		B2557E0920B1924F005DFAE8 /* Tracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tracking.swift; sourceTree = "<group>"; };
 		B25C5C4F20AC2B050083C33D /* Generators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Generators.swift; sourceTree = "<group>"; };
 		B25C5C5120AC71E90083C33D /* Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helpers.swift; sourceTree = "<group>"; };
@@ -101,6 +103,7 @@
 				B25C5C4F20AC2B050083C33D /* Generators.swift */,
 				B2F43E3B20A9B0C9007A3744 /* Main.swift */,
 				B2B5C7E320AB04E500942421 /* ViewElements.swift */,
+				B253736320E6190E004F385C /* LayerElements.swift */,
 				B28A788020BA8B480070E450 /* Table.swift */,
 				B25C5C5720AC846E0083C33D /* Decoding.swift */,
 			);
@@ -234,6 +237,7 @@
 				B25C5C5020AC2B050083C33D /* Generators.swift in Sources */,
 				B2F43E3C20A9B0C9007A3744 /* Main.swift in Sources */,
 				B25C5C5820AC846F0083C33D /* Decoding.swift in Sources */,
+				B253736420E6190E004F385C /* LayerElements.swift in Sources */,
 				B2B5C7E420AB04E500942421 /* ViewElements.swift in Sources */,
 				B253736220E61869004F385C /* Utils.swift in Sources */,
 			);

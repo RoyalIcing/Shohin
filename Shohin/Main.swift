@@ -62,6 +62,25 @@ public struct ViewElement<Msg> {
 	}
 }
 
+public struct LayerElement<Msg> {
+	public typealias MakeLayer = (CALayer?) -> CALayer
+	public typealias LayerAndRegisterEventHandler = (CALayer, (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) -> ()
+	
+	public var key: String
+	public var makeLayerIfNeeded: MakeLayer
+	public var applyToLayer: LayerAndRegisterEventHandler
+	
+	public init(
+		key: String,
+		makeLayerIfNeeded: @escaping MakeLayer,
+		applyToLayer: @escaping LayerAndRegisterEventHandler
+		) {
+		self.key = key
+		self.makeLayerIfNeeded = makeLayerIfNeeded
+		self.applyToLayer = applyToLayer
+	}
+}
+
 
 class EventHandler<Msg> : NSObject {
 	private let send: (Msg) -> ()
