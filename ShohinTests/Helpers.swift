@@ -10,7 +10,7 @@ import UIKit
 
 
 extension UIControl {
-	func testSendActions(for controlEvent: UIControlEvents) {
+	func testSendActions(for controlEvent: UIControl.Event) {
 		let targets = self.allTargets
 		for target in targets {
 			let actions = self.actions(forTarget: target, forControlEvent: controlEvent) ?? []

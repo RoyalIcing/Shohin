@@ -84,7 +84,7 @@ public enum FieldProp<Msg> : ViewProp {
 	case keyboardType(UIKeyboardType)
 	case returnKeyType(UIReturnKeyType)
 	case applyChange(ChangeApplier<UITextField>)
-	case on(UIControlEvents, toMessage: ((UITextField, UIEvent) -> Msg)?)
+	case on(UIControl.Event, toMessage: ((UITextField, UIEvent) -> Msg)?)
 	
 	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<UITextField, Value>, to value: Value) -> FieldProp {
 		return .applyChange(ChangeApplier(keyPath, value: value))
@@ -146,7 +146,7 @@ public func field<Key, Msg>(_ key: Key, _ props: [FieldProp<Msg>]) -> ViewElemen
 public enum ControlProp<Msg, Control: UIControl> : ViewProp {
 	public typealias View = Control
 	
-	case on(UIControlEvents, toMessage: (Control, UIEvent) -> Msg)
+	case on(UIControl.Event, toMessage: (Control, UIEvent) -> Msg)
 	case applyChange(ChangeApplier<Control>, stage: Int)
 	
 	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<Control, Value>, to value: Value, stage: Int) -> ControlProp {
@@ -238,7 +238,7 @@ public func control<Key, Msg, Control: UIControl>(_ key: Key, _ props: [ControlP
 
 
 extension ControlProp where Control : UIButton {
-	public static func title(_ title: String, for controlState: UIControlState) -> ControlProp {
+	public static func title(_ title: String, for controlState: UIControl.State) -> ControlProp {
 		return .applyChange(ChangeApplier(makeChanges: { $0.setTitle(title, for: controlState) }), stage: 0)
 	}
 	
@@ -379,14 +379,14 @@ public enum SegmentedControlProp<Msg> : ViewProp {
 	case selectedKey(String)
 	case segments([Segment])
 	case applyChange(ChangeApplier<UISegmentedControl>)
-	case on(UIControlEvents, toMessage: ((UISegmentedControl, UIEvent) -> Msg)?)
+	case on(UIControl.Event, toMessage: ((UISegmentedControl, UIEvent) -> Msg)?)
 	
 	public static func set<Value>(_ keyPath: ReferenceWritableKeyPath<UISegmentedControl, Value>, to value: Value) -> SegmentedControlProp {
 		return .applyChange(ChangeApplier(keyPath, value: value))
 	}
 	
 	struct CommitState {
-		var selectedIndex: Int = UISegmentedControlNoSegment
+		var selectedIndex: Int = UISegmentedControl.noSegment
 		var segments: [Segment] = []
 		var otherProps: [SegmentedControlProp<Msg>] = []
 		
