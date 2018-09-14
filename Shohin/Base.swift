@@ -45,33 +45,60 @@ extension Command : ExpressibleByArrayLiteral {
 	}
 }
 
-class Store<Model, Msg> {
-	private var _current: MonotonicallyTracked<Model>
-	private let updater: (Msg, inout Model) -> (Command<Msg>)
-	private var use: ((Model) -> ()) = { _ in }
+public protocol ModelProvider : class {
+	associatedtype Model
+	associatedtype Msg
 	
-	init(
+	var currentModel: Model { get }
+	
+	func receive(message: Msg)
+	
+	typealias Unsubscribe = () -> ()
+	func subscribe(_ f: @escaping (Model) -> ()) -> Unsubscribe
+}
+
+public class Store<Model, Msg> : ModelProvider {
+	public typealias Unsubscribe = () -> ()
+	private class SubscriberIdentifier {}
+	
+	private var current: MonotonicallyTracked<Model>
+	private let updater: (Msg, inout Model) -> (Command<Msg>)
+	private var subscribers: Dictionary<ObjectIdentifier, (Model) -> ()> = [:]
+	
+	public init(
 		initial: (Model, Command<Msg>),
-		update: @escaping (Msg, inout Model) -> (Command<Msg>),
-		connect: (_ send: @escaping (Msg) -> ()) -> ((Model) -> ())
+		update: @escaping (Msg, inout Model) -> (Command<Msg>)
 		) {
 		let (current, command) = initial
-		self._current = MonotonicallyTracked(current)
+		self.current = MonotonicallyTracked(current)
 		
 		self.updater = update
-		self.use = connect(receive)
-		self.use(current)
 		
 		command.run(send: self.receive)
 	}
 	
-	var currentModel: Model {
-		return _current.value
+	public var currentModel: Model {
+		return current.value
 	}
 	
-	func receive(message: Msg) {
-		let command = self.updater(message, &_current.value)
-		self.use(self._current.value)
+	private func broadcast(_ model: Model) {
+		for (_, subscriber) in self.subscribers {
+			subscriber(model)
+		}
+	}
+	
+	public func receive(message: Msg) {
+		let command = self.updater(message, &self.current.value)
+		self.broadcast(self.current.value)
 		command.run(send: self.receive)
+	}
+	
+	public func subscribe(_ f: @escaping (Model) -> ()) -> Unsubscribe {
+		let id = SubscriberIdentifier()
+		subscribers[ObjectIdentifier(id)] = f
+		
+		return { [weak self] in
+			self?.subscribers[ObjectIdentifier(id)] = nil
+		}
 	}
 }

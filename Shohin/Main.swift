@@ -270,11 +270,86 @@ class ViewReconciler<Msg> {
 	}
 }
 
+class LayerReconciler<Msg> {
+	let layer: CALayer
+	var send: (Msg) -> () = { _ in }
+	
+	private var keyToSublayer: Dictionary<String, CALayer> = [:]
+//	private var keyToEventHandlers: Dictionary<String, EventHandlerSet<Msg>> = [:]
+	
+	init(layer: CALayer) {
+		self.layer = layer
+	}
+	
+	func update(_ elements: [LayerElement<Msg>]) {
+		for element in elements {
+			let key = element.key
+//			let handlers: EventHandlerSet<Msg>
+//			if let existingHandlers = keyToEventHandlers[key] {
+//				handlers = existingHandlers
+//			}
+//			else {
+//				handlers = EventHandlerSet<Msg>()
+//				handlers.send = send
+//				keyToEventHandlers[key] = handlers
+//			}
+			let existingLayer = keyToSublayer[key]
+			let updatedLayer = element.makeLayerIfNeeded(existingLayer)
+			
+			if existingLayer != updatedLayer {
+				keyToSublayer[key] = updatedLayer
+				
+				existingLayer?.removeFromSuperlayer()
+				layer.addSublayer(updatedLayer)
+			}
+			
+			element.applyToLayer(
+				updatedLayer,
+				{ _, _, _ in (nil, NSSelectorFromString("doNothing:")) } //handlers.curriedRegister(elementKey: key)
+			)
+		}
+	}
+	
+	func layer(forKey key: String) -> CALayer? {
+		return keyToSublayer[key]
+	}
+	
+	public func apply<Model>(model: Model, render: @escaping (Model) -> [LayerElement<Msg>]) {
+		self.update(render(model))
+	}
+}
+
 public class Program<Model, Msg> {
 	let reconciler: ViewReconciler<Msg>
-	let store: Store<Model, Msg>!
+	let store: Store<Model, Msg>
+	var unsubscribeFromStore: Store<Model, Msg>.Unsubscribe!
 	
 	public init(
+		view: UIView,
+		store: Store<Model, Msg>,
+		render: @escaping (Model) -> [ViewElement<Msg>] = { _ in [] },
+		layoutGuideForKey: @escaping (String) -> UILayoutGuide? = { _ in nil },
+		layout: @escaping (Model, LayoutContext) -> [NSLayoutConstraint] = { _, _ in [] }
+		) {
+		let reconciler = ViewReconciler<Msg>(view: view, layoutGuideForKey: layoutGuideForKey)
+		self.reconciler = reconciler
+		self.store = store
+		
+		reconciler.send = store.receive(message:)
+		
+		func use(model: Model) {
+			reconciler.apply(model: model, render: render, layout: layout)
+		}
+		
+		self.unsubscribeFromStore = store.subscribe(use(model:))
+		use(model: store.currentModel)
+	}
+	
+	deinit {
+		self.unsubscribeFromStore()
+	}
+	
+	public convenience init(
 		view: UIView,
 		model: Model,
 		initialCommand: Command<Msg> = [],
@@ -283,17 +358,63 @@ public class Program<Model, Msg> {
 		layoutGuideForKey: @escaping (String) -> UILayoutGuide? = { _ in nil },
 		layout: @escaping (Model, LayoutContext) -> [NSLayoutConstraint] = { _, _ in [] }
 		) {
-		let reconciler = ViewReconciler<Msg>(view: view, layoutGuideForKey: layoutGuideForKey)
-		self.reconciler = reconciler
-		self.store = Store(
+		let store = Store(
 			initial: (model, initialCommand),
-			update: update,
-			connect: { send in
-				reconciler.send = send
-				return { model in
-					reconciler.apply(model: model, render: render, layout: layout)
-				}
-		})
+			update: update
+		)
+		self.init(view: view, store: store, render: render, layoutGuideForKey: layoutGuideForKey, layout: layout)
+	}
+	
+	public var model: Model {
+		return store.currentModel
+	}
+	
+	public func send(_ message: Msg) {
+		store.receive(message: message)
+	}
+}
+
+public func withLayers
+	<Model, Msg, Store: ModelProvider>
+	(
+		layer: CALayer,
+		store: Store,
+		render: @escaping (Model) -> [LayerElement<Msg>] = { _ in [] }
+	) -> Store.Unsubscribe
+	where Store.Model == Model, Store.Msg == Msg
+{
+	let reconciler = LayerReconciler<Msg>(layer: layer)
+	
+	reconciler.send = store.receive(message:)
+	return store.subscribe { model in
+		reconciler.apply(model: model, render: render)
+	}
+}
+
+public class LayerProgram<Model, Msg, Store: ModelProvider>
+where Store.Model == Model, Store.Msg == Msg
+{
+	let reconciler: LayerReconciler<Msg>
+	let store: Store
+	var unsubscribeFromStore: Store.Unsubscribe!
+	
+	public init(
+		layer: CALayer,
+		store: Store,
+		render: @escaping (Model) -> [LayerElement<Msg>] = { _ in [] }
+		) {
+		let reconciler = LayerReconciler<Msg>(layer: layer)
+		self.reconciler = reconciler
+		self.store = store
+		
+		reconciler.send = store.receive(message:)
+		self.unsubscribeFromStore = store.subscribe { model in
+			reconciler.apply(model: model, render: render)
+		}
+	}
+	
+	deinit {
+		self.unsubscribeFromStore()
 	}
 	
 	public var model: Model {

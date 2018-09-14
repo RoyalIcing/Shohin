@@ -60,6 +60,38 @@ struct CustomLayerElement<Msg, CustomLayer: CALayer> {
 	}
 }
 
-public func customLayer<Key, Msg, CustomLayer: CALayer>(_ key: Key, _ layerClass: CustomLayer.Type, _ props: [CustomLayerProp<Msg, CustomLayer>]) -> LayerElement<Msg> {
-	return CustomLayerElement(key: String(describing: key), props: props).toElement()
+extension LayerElement {
+	public static func custom<Key, CustomLayer: CALayer>(_ key: Key, _ layerClass: CustomLayer.Type, _ props: [CustomLayerProp<Msg, CustomLayer>]) -> LayerElement<Msg> {
+		return CustomLayerElement(key: String(describing: key), props: props).toElement()
+	}
+}
+
+
+class LayerReconcilingView<Msg> : UIView {
+	var reconciler: LayerReconciler<Msg>!
+	
+	override init(frame: CGRect) {
+		super.init(frame: frame)
+		
+		self.translatesAutoresizingMaskIntoConstraints = false
+		self.reconciler = LayerReconciler<Msg>(layer: self.layer)
+	}
+	
+	required init?(coder aDecoder: NSCoder) {
+		fatalError("init(coder:) has not been implemented")
+	}
+}
+
+extension ViewElement {
+	public static func layers<Key>(_ key: Key, _ layerElements: [LayerElement<Msg>]) -> ViewElement<Msg> {
+		return ViewElement(
+			key: String(describing: key),
+			makeViewIfNeeded: { existingView in
+				return existingView as? LayerReconcilingView<Msg> ?? LayerReconcilingView()
+		},
+			applyToView: { (untypedView, registerEventHandler) in
+				let view = untypedView as! LayerReconcilingView<Msg>
+				view.reconciler.update(layerElements)
+		})
+	}
 }
