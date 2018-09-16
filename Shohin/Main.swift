@@ -282,6 +282,9 @@ class LayerReconciler<Msg> {
 	}
 	
 	func update(_ elements: [LayerElement<Msg>]) {
+		CATransaction.begin()
+		CATransaction.setAnimationDuration(0.0)
+		
 		for element in elements {
 			let key = element.key
 //			let handlers: EventHandlerSet<Msg>
@@ -308,6 +311,8 @@ class LayerReconciler<Msg> {
 				{ _, _, _ in (nil, NSSelectorFromString("doNothing:")) } //handlers.curriedRegister(elementKey: key)
 			)
 		}
+		
+		CATransaction.commit()
 	}
 	
 	func layer(forKey key: String) -> CALayer? {
@@ -374,6 +379,7 @@ public class Program<Model, Msg> {
 	}
 }
 
+// TODO: keep or remove?
 public func withLayers
 	<Model, Msg, Store: ModelProvider>
 	(
