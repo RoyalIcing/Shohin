@@ -57,7 +57,7 @@ public protocol ModelProvider : class {
 	func subscribe(_ f: @escaping (Model) -> ()) -> Unsubscribe
 }
 
-public class Store<Model, Msg> : ModelProvider {
+public class LocalStore<Model, Msg> : ModelProvider {
 	public typealias Unsubscribe = () -> ()
 	private class SubscriberIdentifier {}
 	

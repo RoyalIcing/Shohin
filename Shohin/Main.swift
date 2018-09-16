@@ -321,12 +321,12 @@ class LayerReconciler<Msg> {
 
 public class Program<Model, Msg> {
 	let reconciler: ViewReconciler<Msg>
-	let store: Store<Model, Msg>
-	var unsubscribeFromStore: Store<Model, Msg>.Unsubscribe!
+	let store: LocalStore<Model, Msg>
+	var unsubscribeFromStore: LocalStore<Model, Msg>.Unsubscribe!
 	
 	public init(
 		view: UIView,
-		store: Store<Model, Msg>,
+		store: LocalStore<Model, Msg>,
 		render: @escaping (Model) -> [ViewElement<Msg>] = { _ in [] },
 		layoutGuideForKey: @escaping (String) -> UILayoutGuide? = { _ in nil },
 		layout: @escaping (Model, LayoutContext) -> [NSLayoutConstraint] = { _, _ in [] }
@@ -358,7 +358,7 @@ public class Program<Model, Msg> {
 		layoutGuideForKey: @escaping (String) -> UILayoutGuide? = { _ in nil },
 		layout: @escaping (Model, LayoutContext) -> [NSLayoutConstraint] = { _, _ in [] }
 		) {
-		let store = Store(
+		let store = LocalStore(
 			initial: (model, initialCommand),
 			update: update
 		)
