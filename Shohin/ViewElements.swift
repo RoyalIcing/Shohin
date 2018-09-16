@@ -242,6 +242,10 @@ extension ControlProp where Control : UIButton {
 		return .applyChange(ChangeApplier(makeChanges: { $0.setTitle(title, for: controlState) }), stage: 0)
 	}
 	
+	public static func titleFont(_ font: UIFont) -> ControlProp {
+		return .applyChange(ChangeApplier(makeChanges: { $0.titleLabel?.font = font }), stage: 0)
+	}
+	
 	public static func onPress(_ makeMessage: @escaping () -> Msg) -> ControlProp {
 		return .on(.touchUpInside) { (button: UIButton, event: UIEvent) in return makeMessage() }
 	}
