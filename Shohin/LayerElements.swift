@@ -73,8 +73,11 @@ class LayerReconcilingView<Msg> : UIView {
 	override init(frame: CGRect) {
 		super.init(frame: frame)
 		
+		let layer = self.layer
+		
 		self.translatesAutoresizingMaskIntoConstraints = false
-		self.reconciler = LayerReconciler<Msg>(layer: self.layer)
+		layer.needsDisplayOnBoundsChange = true
+		self.reconciler = LayerReconciler<Msg>(layer: layer)
 	}
 	
 	required init?(coder aDecoder: NSCoder) {
