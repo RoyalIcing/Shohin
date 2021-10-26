@@ -17,6 +17,7 @@
 		B25C5C5A20AC88EB0083C33D /* DecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25C5C5920AC88EB0083C33D /* DecodingTests.swift */; };
 		B28A788120BA8B480070E450 /* Table.swift in Sources */ = {isa = PBXBuildFile; fileRef = B28A788020BA8B480070E450 /* Table.swift */; };
 		B2B5C7E420AB04E500942421 /* ViewElements.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2B5C7E320AB04E500942421 /* ViewElements.swift */; };
+		B2DE2F10214E40A100C3C75C /* Pages.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2DE2F0F214E40A100C3C75C /* Pages.swift */; };
 		B2F43E2B20A9B0B7007A3744 /* Shohin.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B2F43E2120A9B0B7007A3744 /* Shohin.framework */; };
 		B2F43E3020A9B0B7007A3744 /* ShohinTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2F43E2F20A9B0B7007A3744 /* ShohinTests.swift */; };
 		B2F43E3220A9B0B7007A3744 /* Shohin.h in Headers */ = {isa = PBXBuildFile; fileRef = B2F43E2420A9B0B7007A3744 /* Shohin.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -45,6 +46,7 @@
 		B25C5C5920AC88EB0083C33D /* DecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DecodingTests.swift; sourceTree = "<group>"; };
 		B28A788020BA8B480070E450 /* Table.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Table.swift; sourceTree = "<group>"; };
 		B2B5C7E320AB04E500942421 /* ViewElements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewElements.swift; sourceTree = "<group>"; };
+		B2DE2F0F214E40A100C3C75C /* Pages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pages.swift; sourceTree = "<group>"; };
 		B2F43E2120A9B0B7007A3744 /* Shohin.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Shohin.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B2F43E2420A9B0B7007A3744 /* Shohin.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Shohin.h; sourceTree = "<group>"; };
 		B2F43E2520A9B0B7007A3744 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -105,6 +107,7 @@
 				B2B5C7E320AB04E500942421 /* ViewElements.swift */,
 				B253736320E6190E004F385C /* LayerElements.swift */,
 				B28A788020BA8B480070E450 /* Table.swift */,
+				B2DE2F0F214E40A100C3C75C /* Pages.swift */,
 				B25C5C5720AC846E0083C33D /* Decoding.swift */,
 			);
 			path = Shohin;
@@ -234,6 +237,7 @@
 			files = (
 				B2557E0A20B1924F005DFAE8 /* Tracking.swift in Sources */,
 				B28A788120BA8B480070E450 /* Table.swift in Sources */,
+				B2DE2F10214E40A100C3C75C /* Pages.swift in Sources */,
 				B2F43E3E20A9B104007A3744 /* Base.swift in Sources */,
 				B25C5C5020AC2B050083C33D /* Generators.swift in Sources */,
 				B2F43E3C20A9B0C9007A3744 /* Main.swift in Sources */,

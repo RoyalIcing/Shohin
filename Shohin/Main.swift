@@ -43,22 +43,70 @@ public struct EventHandlingOptions {
 }
 
 
-public struct ViewElement<Msg> {
-	public typealias MakeView = (UIView?) -> UIView
-	public typealias ViewAndRegisterEventHandler = (UIView, (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) -> ()
+public protocol ViewInstance : class {
+	var view: UIView { get }
+}
+
+//protocol NestedViewInstance : ViewInstance {
+//	associatedtype Message
+//
+//	var nestedReconcilers: [ViewReconciler<Message>] { get }
+//}
+//
+//struct ViewInstanceWrapper<Msg> {
+//	var instance: ViewInstance
+//
+//	var view: UIView {
+//		return instance.view
+//	}
+//
+//	var nestedReconcilers: [ViewReconciler<Msg>] {
+//		guard let instance = self.instance as? NestedViewInstance else {
+//			return []
+//		}
+//	}
+//}
+
+class GeneralViewInstance : ViewInstance {
+	var view: UIView
 	
-	public var key: String
-	public var makeViewIfNeeded: MakeView
-	public var applyToView: ViewAndRegisterEventHandler
+	init(view: UIView) {
+		self.view = view
+	}
+}
+
+public enum ViewElement<Msg> {
+	public typealias ViewAndRegisterEventHandler = (UIView, (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) -> ()
+	public typealias ViewInstanceAndRegisterEventHandler = (ViewInstance, (String, MessageMaker<Msg>, EventHandlingOptions) -> (Any?, Selector)) -> ()
+	
+	case normal(key: String, makeViewIfNeeded: (UIView?) -> UIView, applyToView: ViewAndRegisterEventHandler)
+	case instance(key: String, makeIfNeeded: (ViewInstance?) -> ViewInstance, applyTo: ViewInstanceAndRegisterEventHandler)
+	
+	public var key: String {
+		get {
+			switch self {
+			case let .normal(key, _, _):
+				return key
+			case let .instance(key, _, _):
+				return key
+			}
+		}
+		set(newKey) {
+			switch self {
+			case let .normal(_, makeViewIfNeeded, applyToView):
+				self = .normal(key: newKey, makeViewIfNeeded: makeViewIfNeeded, applyToView: applyToView)
+			case let .instance(_, makeIfNeeded, applyTo):
+				self = .instance(key: newKey, makeIfNeeded: makeIfNeeded, applyTo: applyTo)
+			}
+		}
+	}
 	
 	public init(
 		key: String,
-		makeViewIfNeeded: @escaping MakeView,
+		makeViewIfNeeded: @escaping (UIView?) -> UIView,
 		applyToView: @escaping ViewAndRegisterEventHandler
 		) {
-		self.key = key
-		self.makeViewIfNeeded = makeViewIfNeeded
-		self.applyToView = applyToView
+		self = .normal(key: key, makeViewIfNeeded: makeViewIfNeeded, applyToView: applyToView)
 	}
 }
 
@@ -217,7 +265,7 @@ class ViewReconciler<Msg> {
 	let view: UIView
 	var send: (Msg) -> () = { _ in }
 	
-	private var keyToSubview: Dictionary<String, UIView> = [:]
+	private var keyToInstance: Dictionary<String, ViewInstance> = [:]
 	private var keyToEventHandlers: Dictionary<String, EventHandlerSet<Msg>> = [:]
 	private var layoutGuideForKey: (String) -> UILayoutGuide?
 	
@@ -228,45 +276,114 @@ class ViewReconciler<Msg> {
 	
 	func update(_ elements: [ViewElement<Msg>]) {
 		for element in elements {
-			let key = element.key
-			let handlers: EventHandlerSet<Msg>
-			if let existingHandlers = keyToEventHandlers[key] {
-				handlers = existingHandlers
-			}
-			else {
-				handlers = EventHandlerSet<Msg>()
-				handlers.send = send
-				keyToEventHandlers[key] = handlers
-			}
-			let existingView = keyToSubview[key]
-			let updatedView = element.makeViewIfNeeded(existingView)
-			
-			if existingView != updatedView {
-				keyToSubview[key] = updatedView
+			switch element {
+			case let .normal(key, makeViewIfNeeded, applyToView):
+				let handlers: EventHandlerSet<Msg>
+				if let existingHandlers = keyToEventHandlers[key] {
+					handlers = existingHandlers
+				}
+				else {
+					handlers = EventHandlerSet<Msg>()
+					handlers.send = send
+					keyToEventHandlers[key] = handlers
+				}
 				
-				existingView?.removeFromSuperview()
-				view.addSubview(updatedView)
+				let existingInstance = keyToInstance[key]
+				let existingView = existingInstance?.view
+				let updatedView = makeViewIfNeeded(existingView)
+				let updatedInstance: ViewInstance
+				if let existingInstance = existingInstance as? GeneralViewInstance {
+					existingInstance.view = updatedView
+					updatedInstance = existingInstance
+				}
+				else {
+					updatedInstance = GeneralViewInstance(view: updatedView)
+				}
+				
+				var changed = true
+				if let existingInstance = existingInstance,
+					ObjectIdentifier(existingInstance) == ObjectIdentifier(updatedInstance) {
+					changed = false
+				}
+				
+				if changed {
+					keyToInstance[key] = updatedInstance
+					
+					existingView?.removeFromSuperview()
+					view.addSubview(updatedView)
+				}
+				
+				applyToView(
+					updatedView,
+					handlers.curriedRegister(elementKey: key)
+				)
+			case let .instance(key, makeIfNeeded, applyTo):
+				let handlers: EventHandlerSet<Msg>
+				if let existingHandlers = keyToEventHandlers[key] {
+					handlers = existingHandlers
+				}
+				else {
+					handlers = EventHandlerSet<Msg>()
+					handlers.send = send
+					keyToEventHandlers[key] = handlers
+				}
+				
+				let existingInstance = keyToInstance[key]
+				let updatedInstance = makeIfNeeded(existingInstance)
+				
+				var changed = true
+				if let existingInstance = existingInstance,
+					ObjectIdentifier(existingInstance) == ObjectIdentifier(updatedInstance) {
+					changed = false
+				}
+				
+				if changed {
+					keyToInstance[key] = updatedInstance
+					
+					existingInstance?.view.removeFromSuperview()
+					view.addSubview(updatedInstance.view)
+				}
+				
+				applyTo(
+					updatedInstance,
+					handlers.curriedRegister(elementKey: key)
+				)
 			}
-			
-			element.applyToView(
-				updatedView,
-				handlers.curriedRegister(elementKey: key)
-			)
 		}
 	}
 	
 	func view(forKey key: String) -> UIView? {
-		return keyToSubview[key]
+		return keyToInstance[key]?.view
 	}
 	
 	var layoutContext: LayoutContext {
 		return LayoutContext(view: self.view, viewForKey: self.view(forKey:), guideForKey: self.layoutGuideForKey)
 	}
 	
-	public func apply<Model>(model: Model, render: @escaping (Model) -> [ViewElement<Msg>], layout: @escaping (_ model: Model, _ context: LayoutContext) -> [NSLayoutConstraint]) {
+	func apply(layout: (_ context: LayoutContext) -> [NSLayoutConstraint]) {
+		let constraints = layout(layoutContext)
+		NSLayoutConstraint.activate(constraints)
+	}
+	
+	public func apply<Model>(model: Model, render: (Model) -> [ViewElement<Msg>], layout: (_ model: Model, _ context: LayoutContext) -> [NSLayoutConstraint]) {
 		self.update(render(model))
 		let constraints = layout(model, layoutContext)
 		NSLayoutConstraint.activate(constraints)
+	}
+}
+
+class ViewElementController<Msg> : UIViewController {
+	var reconciler: ViewReconciler<Msg>!
+	
+	override func viewDidLoad() {
+		super.viewDidLoad()
+		
+		reconciler = ViewReconciler(view: self.view, layoutGuideForKey: { _ in nil })
+	}
+	
+	func update(_ elements: [ViewElement<Msg>]) {
+		_ = self.view
+		reconciler.update(elements)
 	}
 }
 
