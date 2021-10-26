@@ -33,12 +33,24 @@ class DecodingTests: XCTestCase {
 		
 		XCTAssertEqual(element.key, "a")
 		
-		let view = element.makeViewIfNeeded(nil)
-		element.applyToView(view) { (_, _, _) -> (Any?, Selector) in
-			(nil, NSSelectorFromString("self"))
+		switch element {
+		case let .normal(_, makeViewIfNeeded, applyToView):
+			let view = makeViewIfNeeded(nil)
+			applyToView(view) { (_, _, _) -> (Any?, Selector) in
+				(nil, NSSelectorFromString("self"))
+			}
+			let button = view as! UIButton
+			XCTAssertEqual(button.title(for: UIControl.State.normal), "Click me")
+		default:
+			XCTFail()
 		}
-		let button = view as! UIButton
-		XCTAssertEqual(button.title(for: .normal), "Click me")
+		
+//		let view = element.makeViewIfNeeded(nil)
+//		element.applyToView(view) { (_, _, _) -> (Any?, Selector) in
+//			(nil, NSSelectorFromString("self"))
+//		}
+//		let button = view as! UIButton
+//		XCTAssertEqual(button.title(for: UIControl.State.normal), "Click me")
 	}
 	
 	func testPerformanceExample() {

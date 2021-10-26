@@ -42,7 +42,7 @@ public struct EventHandlingOptions {
 	}
 }
 
-
+/// This allow using view controllers such as PageViewController
 public protocol ViewInstance : class {
 	var view: UIView { get }
 }
